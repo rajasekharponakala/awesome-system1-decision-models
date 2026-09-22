@@ -83,7 +83,7 @@ jobs:
   laya:
     name: Laya (System One Runtime, CPU)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -117,20 +117,35 @@ jobs:
         working-directory: ${{ runner.temp }}/system-one
         run: cargo build --release --locked
 
-      - name: Pull model and start server
+      - name: Pull model
+        timeout-minutes: 20
         working-directory: ${{ runner.temp }}/system-one
         run: |
-          cargo run --release --locked -- model pull laya-multilingual
+          # Print download progress every 30 s so a slow or stuck pull is visible.
+          ( while sleep 30; do
+              echo "[progress] $(date -u +%H:%M:%S) $(du -sh ~/.cache ~/.local/share . 2>/dev/null | tr '\n' ' ')"
+            done ) &
+          watcher=$!
+          cargo run --release --locked -- model pull laya-multilingual 2>&1 | tee "$RUNNER_TEMP/pull.log"
+          status=${PIPESTATUS[0]}
+          kill $watcher 2>/dev/null || true
+          exit $status
+
+      - name: Start server
+        timeout-minutes: 10
+        working-directory: ${{ runner.temp }}/system-one
+        run: |
           nohup cargo run --release --locked -- serve > "$RUNNER_TEMP/laya.log" 2>&1 &
           body='{"model":"laya-multilingual","state":"I was charged twice.","questions":{"q":{"type":"choice","instructions":"Topic?","criteria":{"billing":null,"technical":null}}}}'
-          for i in $(seq 1 180); do
+          for i in $(seq 1 100); do
             if curl -sf http://127.0.0.1:8080/v1/systemone -H 'content-type: application/json' -d "$body" -o "$RUNNER_TEMP/probe.json"; then
               echo "Ready after about $((i * 5)) s:"; cat "$RUNNER_TEMP/probe.json"; echo
               exit 0
             fi
+            if [ $((i % 6)) -eq 0 ]; then echo "[waiting] $((i * 5)) s"; tail -3 "$RUNNER_TEMP/laya.log"; fi
             sleep 5
           done
-          echo "::error::Laya did not answer within 15 minutes"
+          echo "::error::Laya server did not answer within about 8 minutes"
           tail -80 "$RUNNER_TEMP/laya.log"
           exit 1
 
@@ -143,7 +158,9 @@ jobs:
 
       - name: Server log
         if: always()
-        run: tail -80 "$RUNNER_TEMP/laya.log" 2>/dev/null || true
+        run: |
+          echo "--- model pull (last 40 lines)"; tail -40 "$RUNNER_TEMP/pull.log" 2>/dev/null || true
+          echo "--- server (last 80 lines)"; tail -80 "$RUNNER_TEMP/laya.log" 2>/dev/null || true
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -152,6 +169,7 @@ jobs:
           path: |
             ${{ runner.temp }}/laya
             ${{ runner.temp }}/laya.log
+            ${{ runner.temp }}/pull.log
           if-no-files-found: ignore
 
   report:
