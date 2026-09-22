@@ -28,6 +28,9 @@ on:
   push:
     paths:
       - showcase/snake-race/**
+      - "!showcase/snake-race/video/**"
+      - "!showcase/snake-race/RESULTS.md"
+      - "!showcase/snake-race/**/*.md"
       - .github/workflows/snake-race-bench.yml
 
 permissions:
