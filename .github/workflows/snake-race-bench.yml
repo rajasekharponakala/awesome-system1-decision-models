@@ -86,6 +86,7 @@ jobs:
     timeout-minutes: 45
     env:
       SYSTEM_ONE_DEVICE: cpu
+      LLAMA_CPP_TAG: b10964 # the release System One's managed runtime pins
     steps:
       - uses: actions/checkout@v4
         with:
@@ -133,15 +134,35 @@ jobs:
           kill $watcher 2>/dev/null || true
           exit $status
 
-      - name: Install llama.cpp runtime
-        timeout-minutes: 10
+      # System One's managed llama.cpp download for Linux uses dynamically loaded
+      # backends (GGML_BACKEND_DL), but System One never calls ggml_backend_load_all,
+      # so every load fails with "no backends are loaded". Build the same llama.cpp
+      # release with the CPU backend linked in and point System One at it.
+      - name: Cache llama.cpp build
+        id: llama-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/llama.cpp/build/bin
+          key: llama-cpp-${{ env.LLAMA_CPP_TAG }}-static-cpu-avx2-${{ runner.os }}
+
+      - name: Build llama.cpp with the CPU backend linked in
+        if: steps.llama-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 20
+        run: |
+          git clone -q --depth 1 --branch "$LLAMA_CPP_TAG" https://github.com/ggml-org/llama.cpp "$RUNNER_TEMP/llama.cpp"
+          cd "$RUNNER_TEMP/llama.cpp"
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DGGML_BACKEND_DL=OFF \
+            -DGGML_NATIVE=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON -DLLAMA_CURL=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF \
+            -DLLAMA_BUILD_SERVER=OFF -DLLAMA_BUILD_TOOLS=OFF
+          cmake --build build --target llama -j "$(nproc)"
+
+      - name: Use the static-backend llama.cpp build
         working-directory: ${{ runner.temp }}/system-one
         run: |
-          # serve loads the model and the llama.cpp runtime once at startup; if that
-          # fails it logs one error and then answers 503 forever. Do it here instead,
-          # verbosely, so a failure shows its real cause.
-          cargo run --release --locked -- --verbose runtime install 2>&1 | tee "$RUNNER_TEMP/runtime.log"
-          cargo run --release --locked -- runtime info | tee -a "$RUNNER_TEMP/runtime.log"
+          lib=$(find "$RUNNER_TEMP/llama.cpp/build/bin" -name 'libllama.so*' -type f | head -1)
+          ls -l "$RUNNER_TEMP/llama.cpp/build/bin"
+          echo "SYSTEM_ONE_LLAMA_LIBRARY=$lib" >> "$GITHUB_ENV"
+          SYSTEM_ONE_LLAMA_LIBRARY="$lib" cargo run --release --locked -- runtime info | tee "$RUNNER_TEMP/runtime.log"
 
       - name: Smoke test (one decision from the CLI)
         timeout-minutes: 5
