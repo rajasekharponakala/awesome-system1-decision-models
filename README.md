@@ -225,6 +225,8 @@ A System 1 model is the better choice when **the answer space is known ahead of 
 
 To compare models head-to-head (e.g. Jev vs Laya), see **[SHOWCASE_IDEAS.md](SHOWCASE_IDEAS.md)**. It collects 60+ game, puzzle, and simulation ideas: real-time arcade games, bullet chess, quiz buzzers, calibration betting duels, multilingual rounds, NPC swarms, and games that are secretly real work. It also has a fairness checklist so the race measures the models rather than your network.
 
+**Runnable:** [`showcase/snake-race`](showcase/snake-race) is a split-screen Snake race between Jev and Laya (or any `/v1/systemone` backend), with a fixed-tick ladder, a free-run mode, and a headless benchmark. It has no dependencies.
+
 ## Guides and Articles
 
 - [Introducing System One Models and Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev): The launch post from TypeSafe.

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>System 1 Snake Race</title>
+<style>
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --ink: #1d1d1b; --muted: #6b6a64; --line: #e2e0d8;
+  --grid: #efede6; --food: #d9480f; --a: #1c7ed6; --b: #9c36b5; --bad: #e03131; --good: #2b8a3e;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #151514; --panel: #1f1f1d; --ink: #ecebe6; --muted: #9d9b93; --line: #34332f;
+          --grid: #272624; --food: #ff8a4c; --a: #4dabf7; --b: #da77f2; --bad: #ff6b6b; --good: #69db7c; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }
+h1 { font-size: 22px; margin: 0 0 4px; }
+.sub { color: var(--muted); margin: 0 0 16px; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: end; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.controls label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.controls .inline { flex-direction: row; align-items: center; gap: 6px; color: var(--ink); font-size: 13px; }
+select, input[type=number] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+input[type=number] { width: 80px; }
+button { font: inherit; font-weight: 600; border: 0; border-radius: 6px; padding: 8px 16px; background: var(--ink); color: var(--bg); cursor: pointer; }
+button.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.banner { margin: 14px 0 0; padding: 10px 14px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); min-height: 42px; }
+.banner.warn { border-color: var(--bad); }
+.lanes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 16px; }
+.lane { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; border-top: 4px solid var(--c); }
+.lane h2 { font-size: 16px; margin: 0 0 10px; display: flex; justify-content: space-between; gap: 8px; }
+.lane h2 .tag { font-size: 11px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px; }
+canvas { width: 100%; max-width: 340px; aspect-ratio: 1; display: block; margin: 0 auto; border-radius: 6px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.stat { background: var(--bg); border-radius: 6px; padding: 6px 8px; }
+.stat b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 11px; color: var(--muted); }
+.probs { margin-top: 10px; display: grid; gap: 4px; }
+.prob { display: grid; grid-template-columns: 44px 1fr 44px; gap: 6px; align-items: center; font-size: 12px; font-variant-numeric: tabular-nums; }
+.bar { height: 10px; background: var(--grid); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--c); }
+.err { color: var(--bad); font-size: 12px; min-height: 16px; margin-top: 6px; word-break: break-word; }
+table { width: 100%; border-collapse: collapse; margin-top: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; }
+th { font-size: 12px; color: var(--muted); font-weight: 600; }
+details { margin-top: 16px; color: var(--muted); }
+details p { margin: 6px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>System 1 Snake Race</h1>
+  <p class="sub">Two System 1 decision models play the same Snake game from the same seed. Each move is one <code>choice</code> question sent to <code>/v1/systemone</code>.</p>
+
+  <div class="controls">
+    <label>Left lane <select id="laneA"></select></label>
+    <label>Right lane <select id="laneB"></select></label>
+    <label>Mode
+      <select id="mode">
+        <option value="tick">Fixed tick: miss the deadline, lose the move</option>
+        <option value="free">Free run: each model as fast as it can</option>
+      </select>
+    </label>
+    <label>Tick rate (Hz) <input id="hz" type="number" min="1" max="60" value="4"></label>
+    <label>Round (s) <input id="duration" type="number" min="10" max="600" value="60"></label>
+    <label>Seed <input id="seed" type="number" value="42"></label>
+    <label class="inline"><input id="ladder" type="checkbox"> Ladder: +2 Hz every 10 s</label>
+    <label class="inline"><input id="late" type="checkbox"> Apply late answers</label>
+    <button id="start">Start</button>
+    <button id="stop" class="secondary">Stop</button>
+  </div>
+
+  <div id="banner" class="banner">Pick two lanes and press Start.</div>
+
+  <div class="lanes" id="lanes"></div>
+
+  <table id="ladderTable" hidden>
+    <thead><tr><th>Tick rate</th><th id="thA">Left: missed ticks</th><th id="thB">Right: missed ticks</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <details>
+    <summary>How to read this</summary>
+    <p><b>Fixed tick.</b> The game moves on a timer. A model must answer before the next tick or its snake keeps going straight, which counts as a <i>missed tick</i>. This measures whether a model is fast enough for a real-time loop.</p>
+    <p><b>Free run.</b> Each snake moves as soon as its model answers, so a faster model plays more moves in the same time. <i>Food per 100 moves</i> compares decision quality independently of speed.</p>
+    <p><b>Model ms</b> is time spent waiting on the backend, measured by the local server. <b>End-to-end ms</b> adds the hop from browser to server. For a remote API, model ms includes the network round trip.</p>
+    <p>Mock lanes are a heuristic with simulated latency for testing the harness. Never report their numbers as model results.</p>
+  </details>
+</main>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

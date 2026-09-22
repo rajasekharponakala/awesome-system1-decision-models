@@ -48,7 +48,7 @@ Run the game at a fixed tick rate (e.g. 10 Hz). If a model hasn't answered by th
 
 | Game | Question each tick | What the audience sees |
 |---|---|---|
-| **Snake** | Choice: `up / down / left / right` | The slower model's snake runs into walls at high tick rates. |
+| **Snake** ([built: `showcase/snake-race`](showcase/snake-race)) | Choice: `up / down / left / right` | The slower model's snake runs into walls at high tick rates. |
 | **Flappy Bird** | Noul: "Flap now?" | This is the most brutal latency test, since one late answer ends the run. |
 | **Tetris** | Choice among placements (rotations × columns, about 40) | Pieces fall faster each level until one model can't keep up. |
 | **Pong / Breakout** | Choice: `up / stay / down` | Jev and Laya play each other at Pong, head-to-head. |
