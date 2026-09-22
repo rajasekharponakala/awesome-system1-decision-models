@@ -59,17 +59,14 @@ jobs:
       - name: Run benchmark
         working-directory: showcase/snake-race
         env:
-          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY || vars.TYPESAFE_API_KEY }}
-          KEY_IS_VARIABLE: ${{ secrets.TYPESAFE_API_KEY == '' && vars.TYPESAFE_API_KEY != '' }}
+          # Secrets only. Never read the key from `vars`: Actions variables are
+          # not masked, so GitHub prints them in the step's env block.
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
           BENCH_RUNNER: GitHub ubuntu-latest, API over the internet
         run: |
           if [ -z "$TYPESAFE_API_KEY" ]; then
-            echo "::error::No TYPESAFE_API_KEY found. Add it under Settings > Secrets and variables > Actions > Secrets."
+            echo "::error::No TYPESAFE_API_KEY secret. Add it under Settings > Secrets and variables > Actions > Secrets (not Variables)."
             exit 1
-          fi
-          echo "::add-mask::$TYPESAFE_API_KEY"
-          if [ "$KEY_IS_VARIABLE" = "true" ]; then
-            echo "::warning::TYPESAFE_API_KEY is stored as a plain Actions variable. Move it to a secret: variables are not encrypted or masked by default."
           fi
           node bench.mjs --no-mock --n "$POSITIONS" --warmup "$WARMUP" --seed "$SEED" --out "$RUNNER_TEMP/jev"
 
