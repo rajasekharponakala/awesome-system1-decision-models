@@ -84,6 +84,8 @@ jobs:
     name: Laya (System One Runtime, CPU)
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      SYSTEM_ONE_DEVICE: cpu
     steps:
       - uses: actions/checkout@v4
         with:
@@ -126,27 +128,43 @@ jobs:
               echo "[progress] $(date -u +%H:%M:%S) $(du -sh ~/.cache ~/.local/share . 2>/dev/null | tr '\n' ' ')"
             done ) &
           watcher=$!
-          cargo run --release --locked -- model pull laya-multilingual 2>&1 | tee "$RUNNER_TEMP/pull.log"
+          cargo run --release --locked -- --verbose model pull laya-multilingual 2>&1 | tee "$RUNNER_TEMP/pull.log"
           status=${PIPESTATUS[0]}
           kill $watcher 2>/dev/null || true
           exit $status
+
+      - name: Install llama.cpp runtime
+        timeout-minutes: 10
+        working-directory: ${{ runner.temp }}/system-one
+        run: |
+          # serve loads the model and the llama.cpp runtime once at startup; if that
+          # fails it logs one error and then answers 503 forever. Do it here instead,
+          # verbosely, so a failure shows its real cause.
+          cargo run --release --locked -- --verbose runtime install 2>&1 | tee "$RUNNER_TEMP/runtime.log"
+          cargo run --release --locked -- runtime info | tee -a "$RUNNER_TEMP/runtime.log"
+
+      - name: Smoke test (one decision from the CLI)
+        timeout-minutes: 5
+        working-directory: ${{ runner.temp }}/system-one
+        run: cargo run --release --locked -- --verbose decide --state "I was charged twice. Please fix this." --choice billing,technical,other
 
       - name: Start server
         timeout-minutes: 10
         working-directory: ${{ runner.temp }}/system-one
         run: |
-          nohup cargo run --release --locked -- serve > "$RUNNER_TEMP/laya.log" 2>&1 &
-          body='{"model":"laya-multilingual","state":"I was charged twice.","questions":{"q":{"type":"choice","instructions":"Topic?","criteria":{"billing":null,"technical":null}}}}'
-          for i in $(seq 1 100); do
-            if curl -sf http://127.0.0.1:8080/v1/systemone -H 'content-type: application/json' -d "$body" -o "$RUNNER_TEMP/probe.json"; then
-              echo "Ready after about $((i * 5)) s:"; cat "$RUNNER_TEMP/probe.json"; echo
-              exit 0
+          nohup cargo run --release --locked -- --verbose serve > "$RUNNER_TEMP/laya.log" 2>&1 &
+          for i in $(seq 1 60); do
+            if health=$(curl -sf http://127.0.0.1:8080/health); then
+              echo "health: $health"
+              if echo "$health" | grep -q '"status":"ok"'; then exit 0; fi
+              echo "::error::Laya server is up but the model is unavailable (see health error above)"
+              head -40 "$RUNNER_TEMP/laya.log"
+              exit 1
             fi
-            if [ $((i % 6)) -eq 0 ]; then echo "[waiting] $((i * 5)) s"; tail -3 "$RUNNER_TEMP/laya.log"; fi
             sleep 5
           done
-          echo "::error::Laya server did not answer within about 8 minutes"
-          tail -80 "$RUNNER_TEMP/laya.log"
+          echo "::error::Laya server did not start listening within 5 minutes"
+          head -60 "$RUNNER_TEMP/laya.log"
           exit 1
 
       - name: Run benchmark
@@ -160,7 +178,8 @@ jobs:
         if: always()
         run: |
           echo "--- model pull (last 40 lines)"; tail -40 "$RUNNER_TEMP/pull.log" 2>/dev/null || true
-          echo "--- server (last 80 lines)"; tail -80 "$RUNNER_TEMP/laya.log" 2>/dev/null || true
+          echo "--- runtime install"; cat "$RUNNER_TEMP/runtime.log" 2>/dev/null || true
+          echo "--- server (first 60 lines)"; head -60 "$RUNNER_TEMP/laya.log" 2>/dev/null || true
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -170,6 +189,7 @@ jobs:
             ${{ runner.temp }}/laya
             ${{ runner.temp }}/laya.log
             ${{ runner.temp }}/pull.log
+            ${{ runner.temp }}/runtime.log
           if-no-files-found: ignore
 
   report:
