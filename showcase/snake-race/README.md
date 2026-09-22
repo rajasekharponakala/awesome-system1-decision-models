@@ -40,6 +40,14 @@ node bench.mjs --n 200 --warmup 10 --seed 7
 
 This sends the same fixed set of positions to every configured lane, one request at a time after a warm-up, and prints p50/p95/p99 latency, **safe move %** (didn't walk into a wall or its own body), and **closer to food %**. The fixed seed means every lane sees byte-identical requests, and runs are repeatable.
 
+## Run the benchmark in GitHub Actions
+
+[`.github/workflows/snake-race-bench.yml`](../../.github/workflows/snake-race-bench.yml) runs `bench.mjs` on GitHub-hosted runners, which can reach the TypeSafe API and Hugging Face. It runs on every push that touches this folder, or manually from **Actions → Snake race benchmark → Run workflow**, where you can set the number of positions, the seed, and the `LiteVar/system-one` ref. Results appear in the run summary and as artifacts.
+
+1. Add your key as a repository **secret** named `TYPESAFE_API_KEY` (Settings → Secrets and variables → Actions → Secrets). A plain variable also works, but the run warns you, because variables aren't encrypted.
+2. The Jev and Laya lanes run in **separate jobs**. The Jev job gets the key and runs only this folder's dependency-free code. The Laya job builds third-party code (System One Runtime and its crates) and gets no secrets, so that code can never read your key.
+3. Because of that split, the two lanes run on different runners. Jev's numbers include the internet round trip, and Laya runs on a CPU with no GPU. The summary says so.
+
 ## Keep the race fair
 
 - **Jev is remote and Laya is local**, so Jev's model time includes the internet round trip. Say so when you share results. Run from a region near the API, or put Laya behind a remote server too if you want a like-for-like network.
@@ -86,3 +94,4 @@ The state deliberately includes the consequence of each move, because this showc
 | `public/` | The split-screen UI |
 | `bench.mjs` | Headless latency and quality benchmark |
 | `mock.mjs` | Offline mock backend for testing |
+| `report.mjs` | Merges several `bench.mjs --out` results into one Markdown report (used in CI) |

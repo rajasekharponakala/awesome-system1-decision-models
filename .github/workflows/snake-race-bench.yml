@@ -1,0 +1,191 @@
+name: Snake race benchmark
+
+# Benchmarks Jev and Laya with showcase/snake-race/bench.mjs on GitHub-hosted
+# runners, which can reach both the TypeSafe API and Hugging Face.
+#
+# Security design: the two lanes run in separate jobs.
+#   - `jev` receives the TYPESAFE_API_KEY secret and runs only this repo's code
+#     (bench.mjs has no dependencies beyond Node itself).
+#   - `laya` builds and runs third-party code (LiteVar/system-one and its
+#     crates) and receives no secrets.
+# So third-party code never runs in a job that can read the Jev key.
+
+on:
+  workflow_dispatch:
+    inputs:
+      positions:
+        description: Positions per lane
+        default: "200"
+      warmup:
+        description: Warm-up calls discarded per lane
+        default: "10"
+      seed:
+        description: Seed for the position set
+        default: "7"
+      system_one_ref:
+        description: LiteVar/system-one commit, tag or branch to build for Laya
+        default: main
+  push:
+    paths:
+      - showcase/snake-race/**
+      - .github/workflows/snake-race-bench.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: snake-race-bench-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  POSITIONS: ${{ inputs.positions || '100' }}
+  WARMUP: ${{ inputs.warmup || '10' }}
+  SEED: ${{ inputs.seed || '7' }}
+
+jobs:
+  jev:
+    name: Jev (TypeSafe API)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run benchmark
+        working-directory: showcase/snake-race
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY || vars.TYPESAFE_API_KEY }}
+          KEY_IS_VARIABLE: ${{ secrets.TYPESAFE_API_KEY == '' && vars.TYPESAFE_API_KEY != '' }}
+          BENCH_RUNNER: GitHub ubuntu-latest, API over the internet
+        run: |
+          if [ -z "$TYPESAFE_API_KEY" ]; then
+            echo "::error::No TYPESAFE_API_KEY found. Add it under Settings > Secrets and variables > Actions > Secrets."
+            exit 1
+          fi
+          echo "::add-mask::$TYPESAFE_API_KEY"
+          if [ "$KEY_IS_VARIABLE" = "true" ]; then
+            echo "::warning::TYPESAFE_API_KEY is stored as a plain Actions variable. Move it to a secret: variables are not encrypted or masked by default."
+          fi
+          node bench.mjs --no-mock --n "$POSITIONS" --warmup "$WARMUP" --seed "$SEED" --out "$RUNNER_TEMP/jev"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results-jev
+          path: ${{ runner.temp }}/jev
+          if-no-files-found: ignore
+
+  laya:
+    name: Laya (System One Runtime, CPU)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fetch System One Runtime
+        env:
+          REF: ${{ inputs.system_one_ref || 'main' }}
+        run: |
+          git clone https://github.com/LiteVar/system-one "$RUNNER_TEMP/system-one"
+          git -C "$RUNNER_TEMP/system-one" checkout --detach "$REF"
+          echo "SYSTEM_ONE_SHA=$(git -C "$RUNNER_TEMP/system-one" rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Cache Rust build and model assets
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ${{ runner.temp }}/system-one/target
+            ~/.cache
+            ~/.local/share
+          key: system-one-${{ runner.os }}-${{ env.SYSTEM_ONE_SHA }}
+          restore-keys: system-one-${{ runner.os }}-
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/system-one
+        run: cargo build --release --locked
+
+      - name: Pull model and start server
+        working-directory: ${{ runner.temp }}/system-one
+        run: |
+          cargo run --release --locked -- model pull laya-multilingual
+          nohup cargo run --release --locked -- serve > "$RUNNER_TEMP/laya.log" 2>&1 &
+          body='{"model":"laya-multilingual","state":"I was charged twice.","questions":{"q":{"type":"choice","instructions":"Topic?","criteria":{"billing":null,"technical":null}}}}'
+          for i in $(seq 1 180); do
+            if curl -sf http://127.0.0.1:8080/v1/systemone -H 'content-type: application/json' -d "$body" -o "$RUNNER_TEMP/probe.json"; then
+              echo "Ready after about $((i * 5)) s:"; cat "$RUNNER_TEMP/probe.json"; echo
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Laya did not answer within 15 minutes"
+          tail -80 "$RUNNER_TEMP/laya.log"
+          exit 1
+
+      - name: Run benchmark
+        working-directory: showcase/snake-race
+        env:
+          LAYA_BASE_URL: http://127.0.0.1:8080
+          BENCH_RUNNER: GitHub ubuntu-latest, local CPU
+        run: node bench.mjs --no-mock --n "$POSITIONS" --warmup "$WARMUP" --seed "$SEED" --out "$RUNNER_TEMP/laya"
+
+      - name: Server log
+        if: always()
+        run: tail -80 "$RUNNER_TEMP/laya.log" 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results-laya
+          path: |
+            ${{ runner.temp }}/laya
+            ${{ runner.temp }}/laya.log
+          if-no-files-found: ignore
+
+  report:
+    name: Report
+    needs: [jev, laya]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: results
+
+      - name: Write summary
+        env:
+          JEV_RESULT: ${{ needs.jev.result }}
+          LAYA_RESULT: ${{ needs.laya.result }}
+        run: |
+          {
+            echo "## Snake race benchmark: Jev vs Laya"
+            echo
+            node showcase/snake-race/report.mjs results/results-jev results/results-laya/laya results/results-laya
+            echo
+            echo "Jobs: Jev \`$JEV_RESULT\`, Laya \`$LAYA_RESULT\`."
+            echo
+            echo "**Read with care.** Each lane ran on its own GitHub-hosted runner (\`ubuntu-latest\`, CPU only)."
+            echo "Jev's latency includes the internet round trip from the runner to the TypeSafe API."
+            echo "Laya ran locally on the runner's CPU, so it would be faster on a GPU."
+            echo "safe move % counts moves that did not hit a wall or the snake's body; closer to food % is measured only on positions where a safe closer move existed."
+          } | tee -a "$GITHUB_STEP_SUMMARY"

@@ -93,7 +93,7 @@ if (rows.some((r) => r.lane.includes("[mock]"))) console.log("Mock lanes are a h
 
 if (OUT) {
   fs.mkdirSync(OUT, { recursive: true });
-  const meta = { date: new Date().toISOString(), positions: N, warmup: WARMUP, seed: SEED, node: process.version, platform: `${process.platform}/${process.arch}` };
+  const meta = { date: new Date().toISOString(), positions: N, warmup: WARMUP, seed: SEED, node: process.version, platform: `${process.platform}/${process.arch}`, runner: process.env.BENCH_RUNNER || undefined };
   fs.writeFileSync(path.join(OUT, "results.json"), JSON.stringify({ meta, rows }, null, 2));
   const cols = Object.keys(rows[0] || {}).filter((c) => c !== "last error");
   const md = [
