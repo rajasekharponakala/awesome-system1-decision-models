@@ -19,6 +19,7 @@ The name comes from Daniel Kahneman's *Thinking, Fast and Slow*. **System 1** is
 - [Evaluation and Calibration](#evaluation-and-calibration)
 - [Use Cases: When System 1 Wins](#use-cases-when-system-1-wins)
 - [Design Patterns](#design-patterns)
+- [Showcase Ideas: Games and Puzzles](#showcase-ideas-games-and-puzzles)
 - [Guides and Articles](#guides-and-articles)
 - [Related Lists](#related-lists)
 
@@ -219,6 +220,10 @@ A System 1 model is the better choice when **the answer space is known ahead of 
 - **Hierarchical choice.** Break a large taxonomy into a tree of small Choice questions.
 - **Calibrate thresholds per question.** Probabilities are calibrated on average, but the cost of a false positive differs by question, so tune each threshold on labeled data ([jevcal](https://github.com/abhixhek/jevcal)).
 - **Pick the right checkpoint for the script.** The English Laya checkpoint fails confidently on non-Latin scripts. Use the multilingual checkpoint or Laya's router.
+
+## Showcase Ideas: Games and Puzzles
+
+To compare models head-to-head (e.g. Jev vs Laya), see **[SHOWCASE_IDEAS.md](SHOWCASE_IDEAS.md)**. It collects 60+ game, puzzle, and simulation ideas: real-time arcade games, bullet chess, quiz buzzers, calibration betting duels, multilingual rounds, NPC swarms, and games that are secretly real work. It also has a fairness checklist so the race measures the models rather than your network.
 
 ## Guides and Articles
 
