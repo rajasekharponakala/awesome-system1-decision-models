@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>System 1 Snake Race</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg: #151514;
+        --panel: #1f1f1d;
+        --ink: #ecebe6;
+        --muted: #9d9b93;
+        --line: #34332f;
+        --grid: #272624;
+        --food: #ff8a4c;
+        --a: #4dabf7;
+        --b: #da77f2;
+        --bad: #ff6b6b;
+        --good: #69db7c;
+        --sans: Inter, "Helvetica Neue", Arial, ui-sans-serif, system-ui, sans-serif;
+        --mono: "JetBrains Mono", "DejaVu Sans Mono", ui-monospace, monospace;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 1920px; height: 1080px; color: var(--ink); font-family: var(--sans); }
+      .clip { position: absolute; inset: 0; }
+      .center { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+      .kicker { font-size: 30px; color: var(--muted); letter-spacing: 0.02em; }
+      .mono { font-family: var(--mono); }
+
+      /* Scene 1: hook */
+      #s1 h1 { font-size: 124px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.02; }
+      #s1 .line2 { margin-top: 36px; font-size: 54px; font-weight: 600; color: var(--muted); }
+      #s1 .line2 b { color: var(--bad); }
+      #s1 .chip { margin-top: 56px; font-size: 34px; padding: 16px 30px; border: 2px solid var(--line); border-radius: 14px; background: var(--panel); }
+      #s1 .chip i { font-style: normal; color: var(--a); }
+
+      /* Scene 2: split-screen race */
+      #s2 .head { position: absolute; top: 64px; left: 0; right: 0; text-align: center; }
+      #s2 .head h2 { font-size: 64px; font-weight: 800; letter-spacing: -0.03em; }
+      #s2 .head p { margin-top: 12px; font-size: 30px; color: var(--muted); }
+      .lanes { position: absolute; top: 250px; left: 0; right: 0; display: flex; justify-content: center; gap: 80px; }
+      .lane { width: 560px; background: var(--panel); border: 2px solid var(--line); border-radius: 20px; padding: 26px 32px 30px; border-top: 8px solid var(--c); }
+      .lane h3 { display: flex; justify-content: space-between; align-items: baseline; font-size: 40px; font-weight: 800; }
+      .lane h3 span { font-size: 22px; font-weight: 600; color: var(--muted); }
+      .board { position: relative; width: 432px; height: 432px; margin: 22px auto 0; border-radius: 10px; overflow: hidden; background: var(--bg); }
+      .cellbg { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(12, 36px); }
+      .cellbg i { width: 36px; height: 36px; border: 2px solid var(--bg); background: var(--grid); }
+      .seg, .food { position: absolute; left: 0; top: 0; width: 32px; height: 32px; margin: 2px; border-radius: 6px; background: var(--c); opacity: 0; }
+      .seg.head { filter: brightness(1.25); }
+      .food { background: var(--food); border-radius: 50%; }
+      .flash { position: absolute; inset: 0; background: var(--bad); opacity: 0; }
+      .lane .foot { margin-top: 22px; font-size: 26px; color: var(--muted); display: flex; justify-content: space-between; }
+      .lane .foot b { color: var(--ink); font-variant-numeric: tabular-nums; }
+      .verdict { font-weight: 700; }
+      .ok { color: var(--good); }
+      .miss { color: var(--bad); }
+      #s2 .note { position: absolute; bottom: 44px; left: 0; right: 0; text-align: center; font-size: 24px; color: var(--muted); }
+
+      /* Scene 3: tick-rate ladder */
+      #s3 .head { position: absolute; top: 90px; left: 0; right: 0; text-align: center; }
+      #s3 h2 { font-size: 76px; font-weight: 800; letter-spacing: -0.03em; }
+      #s3 .head p { margin-top: 14px; font-size: 30px; color: var(--muted); }
+      .ladder { position: absolute; top: 330px; left: 50%; width: 1320px; margin-left: -660px; }
+      .lrow, .lhead { display: grid; grid-template-columns: 420px 1fr 1fr; align-items: center; }
+      .lhead { font-size: 28px; color: var(--muted); padding: 0 36px 14px; }
+      .lhead span:nth-child(2) { color: var(--a); font-weight: 700; }
+      .lhead span:nth-child(3) { color: var(--b); font-weight: 700; }
+      .lrow { height: 116px; margin-top: 14px; padding: 0 36px; background: var(--panel); border: 2px solid var(--line); border-radius: 18px; font-size: 40px; opacity: 0; }
+      .lrow .hz { font-weight: 800; }
+      .lrow .hz small { font-size: 28px; font-weight: 500; color: var(--muted); margin-left: 12px; }
+      .pill { justify-self: start; font-size: 32px; font-weight: 700; padding: 10px 24px; border-radius: 99px; }
+      .pill.ok { background: rgba(105, 219, 124, 0.14); }
+      .pill.miss { background: rgba(255, 107, 107, 0.14); }
+      #s3 .note { position: absolute; bottom: 60px; left: 0; right: 0; text-align: center; font-size: 26px; color: var(--muted); }
+
+      /* Scene 4: measured results */
+      #s4 .head { position: absolute; top: 96px; left: 0; right: 0; text-align: center; }
+      #s4 h2 { font-size: 76px; font-weight: 800; letter-spacing: -0.03em; }
+      #s4 .head p { margin-top: 14px; font-size: 30px; color: var(--muted); }
+      table { position: absolute; top: 330px; left: 50%; width: 1500px; margin-left: -750px; border-collapse: separate; border-spacing: 0 14px; font-size: 40px; font-variant-numeric: tabular-nums; }
+      th { font-size: 26px; color: var(--muted); font-weight: 600; text-align: right; padding: 0 28px; }
+      td { background: var(--panel); padding: 30px 28px; text-align: right; border-top: 2px solid var(--line); border-bottom: 2px solid var(--line); }
+      th:first-child, td:first-child { text-align: left; }
+      td:first-child { border-left: 8px solid var(--c); border-radius: 16px 0 0 16px; font-weight: 800; }
+      td:first-child small { display: block; font-size: 24px; color: var(--muted); font-weight: 500; margin-top: 6px; }
+      td:last-child { border-right: 2px solid var(--line); border-radius: 0 16px 16px 0; }
+      tr.r { opacity: 0; }
+      #s4 .caveat { position: absolute; bottom: 70px; left: 0; right: 0; text-align: center; font-size: 27px; line-height: 1.5; color: var(--muted); }
+
+      /* Scene 5: outro */
+      #s5 h2 { font-size: 132px; font-weight: 800; letter-spacing: -0.04em; }
+      #s5 .cmd { margin-top: 48px; font-size: 40px; padding: 22px 40px; border-radius: 16px; background: var(--panel); border: 2px solid var(--line); }
+      #s5 .cmd i { font-style: normal; color: var(--muted); }
+      #s5 .repo { margin-top: 44px; font-size: 34px; color: var(--muted); }
+      #s5 .dots { margin-top: 56px; display: flex; gap: 18px; }
+      #s5 .dots i { width: 34px; height: 34px; border-radius: 7px; background: var(--a); }
+      #s5 .dots i:nth-child(n + 4) { background: var(--b); }
+      #s5 .dots i.f { background: var(--food); border-radius: 50%; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="21.5" data-width="1920" data-height="1080">
+      <!-- Scene 1: hook -->
+      <section id="s1" class="clip center" data-start="0" data-duration="3.5" data-track-index="0">
+        <h1 class="t1">Every move is one question.</h1>
+        <p class="line2 t2">Answer before the next tick, <b>or crash.</b></p>
+        <p class="chip mono t3">move = <i>choice</i>(up · down · left)</p>
+      </section>
+
+      <!-- Scene 2: split-screen race -->
+      <section id="s2" class="clip" data-start="3.5" data-duration="7" data-track-index="0">
+        <div class="head">
+          <h2>Snake at 4 moves per second</h2>
+          <p>Same seed, same question. Each snake waits for its own model.</p>
+        </div>
+        <div class="lanes">
+          <div class="lane" id="laneA" style="--c: var(--a)">
+            <h3>Jev <span>TypeSafe API</span></h3>
+            <div class="board"><div class="cellbg"></div><div class="flash"></div></div>
+            <div class="foot"><span>median answer <b class="p50"></b></span><span class="verdict"></span></div>
+          </div>
+          <div class="lane" id="laneB" style="--c: var(--b)">
+            <h3>Laya <span>System One Runtime</span></h3>
+            <div class="board"><div class="cellbg"></div><div class="flash"></div></div>
+            <div class="foot"><span>median answer <b class="p50"></b></span><span class="verdict"></span></div>
+          </div>
+        </div>
+        <p class="note">Replay built from the measured median latencies below. A snake whose model misses the 250 ms deadline can't turn.</p>
+      </section>
+
+      <!-- Scene 3: tick-rate ladder -->
+      <section id="s3" class="clip" data-start="10.5" data-duration="5" data-track-index="0">
+        <div class="head">
+          <h2>Now turn up the tick rate.</h2>
+          <p>Does the median answer arrive before the next move?</p>
+        </div>
+        <div class="ladder">
+          <div class="lhead"><span>Tick rate</span><span>Jev</span><span>Laya</span></div>
+        </div>
+        <p class="note">Based on median (p50) latency. At p95 the slowest answers miss sooner.</p>
+      </section>
+
+      <!-- Scene 4: measured results -->
+      <section id="s4" class="clip" data-start="15.5" data-duration="3.4" data-track-index="0">
+        <div class="head">
+          <h2>Measured, not guessed.</h2>
+          <p class="src"></p>
+        </div>
+        <table>
+          <thead><tr><th>Model</th><th>p50</th><th>p95</th><th>Safe moves</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="caveat"></p>
+      </section>
+
+      <!-- Scene 5: outro -->
+      <section id="s5" class="clip center" data-start="18.9" data-duration="2.6" data-track-index="0">
+        <h2 class="o1">Race them yourself.</h2>
+        <p class="cmd mono o2"><i>$</i> node showcase/snake-race/server.mjs</p>
+        <p class="repo o3">github.com/rajasekharponakala/awesome-system1-decision-models</p>
+        <div class="dots o4"><i></i><i></i><i></i><i></i><i></i><i class="f"></i></div>
+      </section>
+
+      <!-- Sound effects (Kenney, CC0), fetched into assets/sfx/ by the render workflow -->
+      <audio data-start="0.25" data-duration="0.4" data-volume="0.7" data-track-index="2" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+      <audio data-start="3.5" data-duration="0.4" data-volume="0.6" data-track-index="2" src="assets/sfx/impactSoft_medium_004.ogg"></audio>
+      <audio data-start="10.5" data-duration="0.4" data-volume="0.6" data-track-index="2" src="assets/sfx/impactSoft_medium_002.ogg"></audio>
+      <audio data-start="15.5" data-duration="0.4" data-volume="0.6" data-track-index="2" src="assets/sfx/impactSoft_medium_003.ogg"></audio>
+      <audio data-start="18.9" data-duration="0.4" data-volume="0.7" data-track-index="2" src="assets/sfx/bong_001.ogg"></audio>
+    </div>
+
+    <script>
+      // ---- Measured data -------------------------------------------------
+      // Copied from ../RESULTS.md. Every number in the video comes from here,
+      // and the race replay and ladder are derived from these p50 values.
+      const RESULTS = {
+        source: "GitHub Actions, ubuntu-latest, 100 positions, seed 7",
+        caveat: [
+          "Jev: TypeSafe API called over the internet from the runner.",
+          "Laya: laya-multilingual on the runner's CPU (no GPU) via System One Runtime.",
+        ],
+        lanes: [
+          { name: "Jev", served: "jev-1.13.0", p50: 134.4, p95: 208.6, safe: 100.0, color: "--a" },
+          { name: "Laya", served: "laya-multilingual", p50: null, p95: null, safe: null, color: "--b" },
+        ],
+      };
+      // ---------------------------------------------------------------------
+
+      const SIZE = 12, CELL = 36, TICK = 0.25;
+      const fmt = (v, unit = "") => (v == null ? "n/a" : `${Math.round(v)}${unit}`);
+
+      // Seeded RNG and a tiny deterministic Snake so the replay is identical on every render.
+      function rng(seed) {
+        let a = seed >>> 0;
+        return () => {
+          a = (a + 0x6d2b79f5) >>> 0;
+          let t = a;
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const DIRS = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] };
+      const OPP = { up: "down", down: "up", left: "right", right: "left" };
+
+      function simulate(canSteer, ticks, seed) {
+        const rand = rng(seed);
+        const fresh = () => ({ snake: [[6, 4], [6, 3], [6, 2]], dir: "right" });
+        let g = fresh();
+        const placeFood = () => {
+          const taken = new Set(g.snake.map(([r, c]) => r * SIZE + c));
+          const free = [];
+          for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (!taken.has(r * SIZE + c)) free.push([r, c]);
+          return free[Math.floor(rand() * free.length)];
+        };
+        let food = placeFood();
+        const frames = [];
+        const hits = (cell, body) => cell[0] < 0 || cell[1] < 0 || cell[0] >= SIZE || cell[1] >= SIZE || body.some(([r, c]) => r === cell[0] && c === cell[1]);
+        for (let k = 0; k < ticks; k++) {
+          if (canSteer) {
+            let best = null, bestD = Infinity;
+            for (const d of Object.keys(DIRS)) {
+              if (d === OPP[g.dir]) continue;
+              const n = [g.snake[0][0] + DIRS[d][0], g.snake[0][1] + DIRS[d][1]];
+              if (hits(n, g.snake.slice(0, -1))) continue;
+              const dist = Math.abs(n[0] - food[0]) + Math.abs(n[1] - food[1]);
+              if (dist < bestD) { bestD = dist; best = d; }
+            }
+            if (best) g.dir = best;
+          }
+          const head = [g.snake[0][0] + DIRS[g.dir][0], g.snake[0][1] + DIRS[g.dir][1]];
+          if (hits(head, g.snake.slice(0, -1))) {
+            frames.push({ snake: g.snake.map((s) => s.slice()), food: food.slice(), crash: true });
+            g = fresh();
+            continue;
+          }
+          g.snake.unshift(head);
+          if (head[0] === food[0] && head[1] === food[1]) food = placeFood();
+          else g.snake.pop();
+          frames.push({ snake: g.snake.map((s) => s.slice()), food: food.slice(), crash: false });
+        }
+        return frames;
+      }
+
+      const tl = gsap.timeline({ paused: true });
+      const at = (sceneStart, t) => sceneStart + t;
+
+      // Scene 1
+      tl.fromTo("#s1 .t1", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.25);
+      tl.fromTo("#s1 .t2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 1.3);
+      tl.fromTo("#s1 .t3", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 2.1);
+
+      // Scene 2: build boards and schedule the replay
+      const S2 = 3.5, RACE_START = 0.9, RACE_TICKS = 22;
+      tl.fromTo("#s2 .head", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, at(S2, 0.05));
+      tl.fromTo("#s2 .lane", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out", stagger: 0.12 }, at(S2, 0.2));
+      tl.fromTo("#s2 .note", { opacity: 0 }, { opacity: 1, duration: 0.4 }, at(S2, 1.2));
+
+      RESULTS.lanes.forEach((lane, i) => {
+        const el = document.querySelector(i === 0 ? "#laneA" : "#laneB");
+        const board = el.querySelector(".board");
+        board.querySelector(".cellbg").innerHTML = "<i></i>".repeat(SIZE * SIZE);
+        el.querySelector(".p50").textContent = fmt(lane.p50, " ms");
+        const inTime = lane.p50 != null && lane.p50 < TICK * 1000;
+        const verdict = el.querySelector(".verdict");
+        verdict.textContent = lane.p50 == null ? "not measured" : inTime ? "in time" : "too slow";
+        verdict.className = "verdict " + (inTime ? "ok" : "miss");
+
+        const segs = Array.from({ length: 14 }, (_, j) => {
+          const s = document.createElement("div");
+          s.className = "seg" + (j === 0 ? " head" : "");
+          board.appendChild(s);
+          return s;
+        });
+        const food = document.createElement("div");
+        food.className = "food";
+        board.appendChild(food);
+        const flash = board.querySelector(".flash");
+
+        if (lane.p50 == null) return; // no data: show an empty board, never a made-up replay
+        const frames = simulate(inTime, RACE_TICKS, 42);
+        frames.forEach((f, k) => {
+          const t = at(S2, RACE_START + k * TICK);
+          segs.forEach((s, j) => {
+            const cell = f.snake[j];
+            tl.set(s, cell ? { x: cell[1] * CELL, y: cell[0] * CELL, opacity: 1 } : { opacity: 0 }, t);
+          });
+          tl.set(food, { x: f.food[1] * CELL, y: f.food[0] * CELL, opacity: 1 }, t);
+          if (f.crash) tl.fromTo(flash, { opacity: 0.55 }, { opacity: 0, duration: 0.35 }, t);
+        });
+      });
+
+      // Scene 3: tick-rate ladder derived from p50
+      const S3 = 10.5, RATES = [4, 6, 8, 10];
+      tl.fromTo("#s3 .head", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, at(S3, 0.05));
+      tl.fromTo("#s3 .lhead", { opacity: 0 }, { opacity: 1, duration: 0.3 }, at(S3, 0.4));
+      const ladder = document.querySelector("#s3 .ladder");
+      RATES.forEach((hz, i) => {
+        const deadline = 1000 / hz;
+        const row = document.createElement("div");
+        row.className = "lrow";
+        const cell = (lane) => {
+          if (lane.p50 == null) return `<span class="pill">n/a</span>`;
+          const ok = lane.p50 < deadline;
+          return `<span class="pill ${ok ? "ok" : "miss"}">${ok ? "✓ in time" : "✗ misses"}</span>`;
+        };
+        row.innerHTML = `<span class="hz">${hz} Hz<small>${Math.round(deadline)} ms per move</small></span>${cell(RESULTS.lanes[0])}${cell(RESULTS.lanes[1])}`;
+        ladder.appendChild(row);
+        // Rows land 0.9 s apart so each one can be read.
+        tl.fromTo(row, { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.3, ease: "power3.out" }, at(S3, 0.8 + i * 0.9));
+      });
+      tl.fromTo("#s3 .note", { opacity: 0 }, { opacity: 1, duration: 0.4 }, at(S3, 4.1));
+
+      // Scene 4: measured table
+      const S4 = 15.5;
+      document.querySelector("#s4 .src").textContent = RESULTS.source;
+      document.querySelector("#s4 .caveat").innerHTML = RESULTS.caveat.join("<br>");
+      const tbody = document.querySelector("#s4 tbody");
+      RESULTS.lanes.forEach((lane) => {
+        const tr = document.createElement("tr");
+        tr.className = "r";
+        tr.style.setProperty("--c", `var(${lane.color})`);
+        tr.innerHTML = `<td>${lane.name}<small>${lane.served}</small></td><td>${fmt(lane.p50, " ms")}</td><td>${fmt(lane.p95, " ms")}</td><td>${lane.safe == null ? "n/a" : lane.safe.toFixed(0) + "%"}</td>`;
+        tbody.appendChild(tr);
+      });
+      tl.fromTo("#s4 .head", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, at(S4, 0.05));
+      tl.fromTo("#s4 tr.r", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out", stagger: 0.25 }, at(S4, 0.35));
+      tl.fromTo("#s4 .caveat", { opacity: 0 }, { opacity: 1, duration: 0.4 }, at(S4, 1.0));
+
+      // Scene 5: outro
+      const S5 = 18.9;
+      tl.fromTo("#s5 .o1", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.8)" }, at(S5, 0.05));
+      tl.fromTo("#s5 .o2", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, at(S5, 0.45));
+      tl.fromTo("#s5 .o3", { opacity: 0 }, { opacity: 1, duration: 0.35 }, at(S5, 0.75));
+      tl.fromTo("#s5 .dots i", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.25, stagger: 0.08 }, at(S5, 0.9));
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,82 @@
+name: Render launch video
+
+# Renders showcase/snake-race/video (a Hyperframes composition) to MP4.
+# No secrets and no AI agent: the composition is committed, and this job only
+# renders it. The storyboard follows the /brag skill's rules
+# (https://github.com/latent-spaces/brag), and the sound effects are Kenney
+# CC0 files taken from brag's pinned commit.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - showcase/snake-race/video/**
+      - .github/workflows/render-video.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: render-video-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HYPERFRAMES_VERSION: 0.8.61
+  BRAG_REPO: https://github.com/latent-spaces/brag
+  BRAG_SHA: 57ce4c9bb912f01a0078b154318bf67c5cbf780f # brag 0.3.0, source of the CC0 Kenney SFX
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: showcase/snake-race/video
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install FFmpeg and fonts
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q ffmpeg fonts-inter fonts-jetbrains-mono || sudo apt-get install -y -q ffmpeg
+          ffmpeg -version | head -1
+
+      - name: Install Hyperframes
+        run: |
+          npm install -g "hyperframes@$HYPERFRAMES_VERSION"
+          npx hyperframes doctor || true
+
+      - name: Fetch sound effects (Kenney, CC0)
+        run: |
+          git init -q "$RUNNER_TEMP/brag"
+          git -C "$RUNNER_TEMP/brag" fetch -q --depth 1 "$BRAG_REPO" "$BRAG_SHA"
+          git -C "$RUNNER_TEMP/brag" checkout -q FETCH_HEAD
+          mkdir -p assets/sfx
+          src="$RUNNER_TEMP/brag/skills/brag/assets/sfx"
+          cp "$src"/impact/impactSoft_medium_00{1,2,3,4}.ogg "$src"/interface/bong_001.ogg assets/sfx/
+          ls -l assets/sfx
+
+      - name: Lint and check
+        run: |
+          npx hyperframes lint .
+          npx hyperframes check
+
+      - name: Render
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          npx hyperframes render --quality high -o "$RUNNER_TEMP/out/snake-race.mp4"
+          ffprobe -v error -show_entries format=duration:stream=width,height -of default=nw=1 "$RUNNER_TEMP/out/snake-race.mp4"
+
+      - name: Poster frame
+        run: ffmpeg -y -loglevel error -ss 6.5 -i "$RUNNER_TEMP/out/snake-race.mp4" -frames:v 1 -q:v 2 "$RUNNER_TEMP/out/snake-race.jpg"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snake-race-video
+          path: ${{ runner.temp }}/out
