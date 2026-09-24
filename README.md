@@ -4,6 +4,12 @@
 
 The name comes from Daniel Kahneman's *Thinking, Fast and Slow*. **System 1** is fast and intuitive, and **System 2** is slow and deliberate. A generative LLM behaves like System 2: it writes an answer token by token, and your code then parses it. A System 1 model reads the input once and scores a fixed set of answers you define. The output is always a value from your schema, with a probability attached, so there is no free text to parse and no answer outside the options.
 
+## See it in action
+
+[![Split-screen Snake race: Jev and Laya each steer a snake from the same seed](docs/media/snake-race.gif)](docs/media/snake-race.mp4)
+
+*Jev (TypeSafe API) vs base Laya on a CPU-only runner, playing [Snake](showcase/snake-race) at 4 moves per second. [Watch the full video with sound](docs/media/snake-race.mp4). The numbers come from one [measured benchmark run](showcase/snake-race/RESULTS.md) and describe that setup, not the models in general. Laya's authors report much lower latency on a GPU and higher accuracy from their fine-tuned checkpoint.*
+
 ## Contents
 
 - [Core Concepts](#core-concepts)

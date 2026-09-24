@@ -73,10 +73,49 @@ jobs:
           npx hyperframes render --quality high -o "$RUNNER_TEMP/out/snake-race.mp4"
           ffprobe -v error -show_entries format=duration:stream=width,height -of default=nw=1 "$RUNNER_TEMP/out/snake-race.mp4"
 
-      - name: Poster frame
-        run: ffmpeg -y -loglevel error -ss 6.5 -i "$RUNNER_TEMP/out/snake-race.mp4" -frames:v 1 -q:v 2 "$RUNNER_TEMP/out/snake-race.jpg"
+      - name: Poster frame and README preview GIF
+        run: |
+          out="$RUNNER_TEMP/out"
+          ffmpeg -y -loglevel error -ss 6.5 -i "$out/snake-race.mp4" -frames:v 1 -q:v 2 "$out/snake-race.jpg"
+          # GitHub READMEs play GIFs inline but not committed MP4s, so ship a small GIF preview.
+          ffmpeg -y -loglevel error -i "$out/snake-race.mp4" -filter_complex \
+            "fps=10,scale=800:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4" \
+            -loop 0 "$out/snake-race.gif"
+          ls -lh "$out"
 
       - uses: actions/upload-artifact@v4
         with:
           name: snake-race-video
           path: ${{ runner.temp }}/out
+
+  # Commits the rendered files to docs/media so the README can show them.
+  # This is the only job with write access, and it runs no third-party code:
+  # it just downloads the render job's artifact and commits it. Pushes made
+  # with GITHUB_TOKEN don't trigger other workflows, so this can't loop.
+  publish:
+    needs: render
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: snake-race-video
+          path: docs/media
+
+      - name: Commit updated media
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/media/snake-race.mp4 docs/media/snake-race.gif docs/media/snake-race.jpg
+          if git diff --cached --quiet; then
+            echo "Media unchanged."
+            exit 0
+          fi
+          git commit -m "Update launch video media (render run ${{ github.run_id }})"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
