@@ -193,6 +193,7 @@ Existing projects to learn from or fork (mostly listed in [cobanov/awesome-jev](
 [Soupbase (puzzles)](https://github.com/spoonnotfound/soupbase) ·
 [killmyidea](https://github.com/monteduro/killmyidea) ·
 [jev-canvas](https://github.com/gaborishka/jev-canvas) ·
-[jev-experiments](https://github.com/dabit3/jev-experiments)
+[jev-experiments](https://github.com/dabit3/jev-experiments) ·
+[laya-mlx Snake demo (60 decisions/s on an M3 Max)](https://github.com/mizorewww/laya-mlx)
 
 Have you built one of these? Open a PR and add it under **Tools and Applications → Real-time control and games** in the [README](README.md).

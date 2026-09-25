@@ -23,6 +23,7 @@ The name comes from Daniel Kahneman's *Thinking, Fast and Slow*. **System 1** is
 - [Provider and Framework Integrations](#provider-and-framework-integrations)
 - [Tools and Applications](#tools-and-applications)
 - [Evaluation and Calibration](#evaluation-and-calibration)
+  - [Head-to-head: Jev vs Laya](#head-to-head-jev-vs-laya)
 - [Use Cases: When System 1 Wins](#use-cases-when-system-1-wins)
 - [Design Patterns](#design-patterns)
 - [Showcase Ideas: Games and Puzzles](#showcase-ideas-games-and-puzzles)
@@ -74,8 +75,10 @@ Jev-compatible open runtimes expose the same `POST /v1/systemone` wire format, s
 
 ### Open Weights
 
-- [Laya (Convai Innovations)](https://github.com/NandhaKishorM/laya): An Apache-2.0 System 1 model trained with RL against strictly proper scoring rules (RLCD), so its probabilities are calibrated. The English model is ModernBERT-large (421M) and the multilingual one is mmBERT-base (322M, 100+ languages). It supports `choice`, `score`, and `noul`, and runs in about 33 ms per question on a T4 GPU (about 7 ms batched). Install with `pip install laya`.
-  - Checkpoints: [`laya`](https://huggingface.co/convaiinnovations/laya) · [`laya-multilingual`](https://huggingface.co/convaiinnovations/laya-multilingual) · [`laya-typed-decisions`](https://huggingface.co/convaiinnovations/laya-typed-decisions) (fine-tuned; the authors report 0.766 accuracy against Jev's 0.727 on their typed-decisions benchmark) · [Demo](https://huggingface.co/spaces/convaiinnovations/laya-demo)
+- [Laya (Convai Innovations)](https://github.com/NandhaKishorM/laya): An Apache-2.0 System 1 model released 18 September 2026 and trained with RL against strictly proper scoring rules (RLCD), so its probabilities are calibrated. It supports `choice`, `score`, and `noul`, and runs in about 33 ms per question on a T4 GPU (about 7 ms batched). Install with `pip install laya` (v0.3.20 at the time of writing). The package includes `laya-serve`, a Jev-compatible `POST /v1/systemone` server (`pip install "laya[serve]"`), plus optional ONNX, MCP, and LangChain extras. [Website](https://laya.convaiinnovations.com/)
+  - Checkpoints: [`laya`](https://huggingface.co/convaiinnovations/laya) (English, ModernBERT-large, 421M, 512 tokens) · [`laya-multilingual`](https://huggingface.co/convaiinnovations/laya-multilingual) (322M, 100+ languages, up to 8,192 tokens) · [`laya-typed-decisions`](https://huggingface.co/convaiinnovations/laya-typed-decisions) (421M, fine-tuned on the typed-decisions benchmark's training split) · [Demo](https://huggingface.co/spaces/convaiinnovations/laya-demo)
+  - The authors report 0.766 accuracy against Jev's 0.727 on their typed-decisions benchmark (fine-tuned checkpoint) and better calibration (ECE 0.081 vs 0.144). They also say Jev stays stronger on choices with more than 20 options. The base checkpoints score far lower zero-shot; see [independent comparisons](#head-to-head-jev-vs-laya).
+- [Kev (Jared Palmer)](https://github.com/jaredpalmer/kev): An Apache-2.0 family of decision models from 0.8B to 27B parameters, built on Qwen3.5 bases and released 20 September 2026. It is a drop-in for the Jev API (`kev.serve`, or deploy to Modal). On the repo's own new-source benchmark, Kev-27B scores 0.848 against Jev's 0.857. The larger models need a data-center GPU; the 0.8B model runs on Apple silicon. [Kev-9B on Hugging Face](https://huggingface.co/jaredpalmer/kev-9b)
 - [Von](https://github.com/wfzyx/von): An Apache-2.0 model built on ModernBERT-large (395M). It claims under 15 ms latency and is a drop-in for the `/v1/systemone` spec. Install with `pip install von-sdk`.
 - [System One Gemma](https://github.com/akash-kamat/system-one-gemma): Gemma 3 270M with a LoRA scoring head, running in about 50 ms on CPU. The code is Apache-2.0, but the pretrained weights are non-commercial because of CC-BY-NC training data.
 - [OpenJev](https://github.com/razorback16/openjev): A Jev-compatible decision server on DiffusionGemma 26B-A4B (Apache-2.0). It runs through vLLM (24 GB+ NVIDIA GPU) or MLX, and adds image support.
@@ -91,12 +94,16 @@ Jev-compatible open runtimes expose the same `POST /v1/systemone` wire format, s
 - [open-jev (MLX)](https://github.com/daseinlabs/open-jev): A Gemma 3 option scorer for Apple silicon.
 - [openJev Verdict 2.0](https://github.com/Heman10x-NGU/openJev-verdict-2.0): A decision system built on ModernBERT.
 - [Simple Jev](https://github.com/featherless-ai/simple-jev): A minimal transformer that reads decisions from logits.
+- [open-alternative-jev](https://github.com/ikermoel/open-alternative-jev): The Apache-2.0 `so1` library, which reads typed decisions from the logits of any open-weights Qwen model (0.5B–27B) through Hugging Face Transformers or vLLM. The authors report 73.7% on typed decisions with a stock Qwen 27B. It is not API-compatible with Jev.
 
 ---
 
 ## Runtimes and Servers
 
-- [System One Runtime](https://github.com/LiteVar/system-one): An MIT-licensed, local, cross-platform runtime (macOS/Windows/Linux, x86_64/arm64, Metal/Vulkan) that needs no Python. It exposes a Jev-compatible `POST /v1/systemone` API and a CLI, and currently uses Laya Multilingual as its backend.
+- [laya-serve](https://github.com/NandhaKishorM/laya): Laya's own Jev-compatible HTTP server, included in the `laya` package (`pip install "laya[serve]"`, then `laya-serve`, default port 8000). It serves all three checkpoints; pick one with the request's `model` field (`english`, `multilingual`, or `typed-decisions`). It runs on CPU or CUDA.
+- [laya-mlx](https://github.com/mizorewww/laya-mlx): An independent Apache-2.0 port of Laya to Apple's MLX, with all three checkpoints. It reports 7–14 ms per short decision on an M3 Max, using under 1 GB of memory. Install with `pip install laya-mlx`.
+- [laya-coreml](https://github.com/mizorewww/laya-coreml): A sibling port to Core ML and the Apple Neural Engine, reporting about 5 ms per short decision on an M3 Max, with speed and energy benchmarks.
+- [System One Runtime](https://github.com/LiteVar/system-one): An MIT-licensed, local, cross-platform runtime (macOS/Windows/Linux, x86_64/arm64, Metal/Vulkan) that needs no Python. It exposes a Jev-compatible `POST /v1/systemone` API and a CLI, and currently uses Laya Multilingual as its backend. Only macOS arm64 is tested end to end. In v0.1.1 on Linux, model loading fails with "no backends are loaded" because it never loads llama.cpp's plugin backends; [our benchmark workflow](.github/workflows/snake-race-bench.yml) shows a workaround.
 - [@receptron/laya](https://github.com/receptron/laya): Runs Laya from Node.js/TypeScript through ONNX Runtime, with no PyTorch. It needs about 2 GB RAM and takes about 140 ms on CPU. Install with `npm install @receptron/laya`.
 - [openjev-sglang](https://github.com/ekzhang/openjev-sglang): A Jev-style endpoint on SGLang.
 - [jevmlx](https://github.com/bnsd55/jevmlx): Parallel decisions on Apple MLX.
@@ -175,6 +182,23 @@ Jev-compatible open runtimes expose the same `POST /v1/systemone` wire format, s
 - [jevcal](https://github.com/abhixhek/jevcal): Tunes confidence thresholds on your own labeled data.
 - [Laya BENCHMARKS.md](https://github.com/NandhaKishorM/laya): Laya's per-language and per-task results, including where it fails.
 - [When a Judgment Layer's Fields Lie](https://doi.org/10.5281/zenodo.22901853): An independent measurement study.
+- [laya-jev-lab](https://github.com/yibie/laya-jev-lab): Independent Jev vs Laya measurements on 40 Chinese support tickets, plus a local-first cascade (see below).
+- [Luni/laya-jev-benchmark](https://huggingface.co/datasets/Luni/laya-jev-benchmark): A shared dataset for comparing Laya and Jev on the same inputs.
+- [Using TypeSafe's Jev for evals (Langfuse)](https://langfuse.com/blog/2026-09-18-using-typesafes-jev-for-evals): Using Jev as an evaluator inside an LLM observability stack.
+- [Snake race benchmark (this repo)](showcase/snake-race/RESULTS.md): Jev vs Laya on identical Snake positions, run in GitHub Actions with published logs.
+
+### Head-to-head: Jev vs Laya
+
+Which model "wins" depends on the checkpoint, the hardware, and the task. The published results so far:
+
+| Source | Setup | Accuracy | Latency |
+|---|---|---|---|
+| [Laya's authors](https://github.com/NandhaKishorM/laya) | Fine-tuned `laya-typed-decisions` vs Jev, typed-decisions benchmark, T4 GPU | Laya 0.766, Jev 0.727 | Laya 32.8 ms, Jev 236–276 ms |
+| [laya-jev-lab](https://github.com/yibie/laya-jev-lab) | 40 Chinese support tickets, Laya on MLX (M4 Max) vs Jev API | Jev 78%, Laya 57% | Laya 7.6 ms, Jev 588 ms |
+| [laya-jev-lab](https://github.com/yibie/laya-jev-lab) cascade | Laya first; send cases below 0.60 confidence to Jev | 78% (same as Jev) | 327 ms mean, 45% of traffic handled locally |
+| [This repo](showcase/snake-race/RESULTS.md) | Snake positions, base `laya-multilingual` on a CPU-only CI runner vs Jev API | Jev 100% safe moves, Laya 81% | Jev 164 ms, Laya 3.6 s |
+
+The pattern: Laya is much faster wherever it runs on local accelerated hardware (GPU, MLX, Core ML), and its fine-tuned checkpoint is competitive in accuracy on tasks like its training data. Jev is more accurate out of the box on new tasks. A cascade gets most of both. Test on your own data before choosing.
 
 ---
 
@@ -211,7 +235,10 @@ A System 1 model is the better choice when **the answer space is known ahead of 
 | You need | Pick |
 |---|---|
 | A managed API, the widest ecosystem, and gateway availability | **Jev** |
-| Open weights (Apache-2.0), self-hosting, and multilingual support | **Laya** (Python) or **System One Runtime** / **@receptron/laya** (no Python) |
+| Open weights (Apache-2.0), self-hosting, and multilingual support | **Laya** via `laya-serve` (Python) or **@receptron/laya** (Node, no Python) |
+| The fastest local decisions on a Mac | **Laya** via **laya-mlx** or **laya-coreml** |
+| Open weights with accuracy close to Jev, and a data-center GPU | **Kev** (up to 27B) |
+| Jev accuracy at lower cost and latency | A **cascade**: Laya first, Jev for low-confidence cases |
 | The lowest latency on a GPU with local, drop-in `/v1/systemone` | **Von** |
 | CPU-only or edge, and you don't need commercial use | **System One Gemma** |
 | Large-model accuracy or image input, self-hosted | **OpenJev** (DiffusionGemma, 24 GB+ GPU) |
@@ -252,6 +279,8 @@ To compare models head-to-head (e.g. Jev vs Laya), see **[SHOWCASE_IDEAS.md](SHO
 - [cobanov/awesome-jev](https://github.com/cobanov/awesome-jev): A comprehensive, source-backed list of Jev projects, and a source for many entries here.
 - [awesome-open-system-one](https://github.com/rupeshpoojary9/awesome-open-system-one): Focuses on open models.
 - [awesome-typesafe](https://github.com/AbdelStark/awesome-typesafe): Covers the wider TypeSafe ecosystem.
+- [Made with Laya](https://www.madewithlaya.com/): A directory of projects built with Laya.
+- [System One Models](https://systemonemodels.org/): Spec sheets, limits, and versions for System One models.
 - [Made with Jev](https://madewithjev.com): A directory of use cases.
 
 ---

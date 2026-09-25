@@ -213,9 +213,87 @@ jobs:
             ${{ runner.temp }}/runtime.log
           if-no-files-found: ignore
 
+  laya-py:
+    # Laya's own Python package and its Jev-compatible server (laya-serve), one job
+    # per checkpoint. Like the `laya` job it runs third-party code and gets no secrets.
+    name: Laya ${{ matrix.checkpoint }} (laya-serve, CPU)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        checkpoint: [english, multilingual, typed-decisions]
+    env:
+      LAYA_VERSION: "0.3.20"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pip and Hugging Face downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/huggingface
+          key: laya-py-${{ env.LAYA_VERSION }}-${{ matrix.checkpoint }}-${{ runner.os }}
+
+      - name: Install Laya
+        run: |
+          pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
+          pip install --quiet "laya[serve]==$LAYA_VERSION"
+          python -c "import laya, torch; print('laya', laya.__version__ if hasattr(laya, '__version__') else '?', 'torch', torch.__version__, 'threads', torch.get_num_threads())"
+
+      - name: Start laya-serve
+        timeout-minutes: 15
+        env:
+          LAYA_DEVICE: cpu
+          LAYA_MODELS: ${{ matrix.checkpoint }}
+          LAYA_PORT: "8000"
+        run: |
+          export LAYA_THREADS=$(nproc)
+          nohup laya-serve > "$RUNNER_TEMP/laya-serve.log" 2>&1 &
+          for i in $(seq 1 150); do
+            if health=$(curl -sf http://127.0.0.1:8000/health) && echo "$health" | grep -q '"loaded"'; then
+              echo "health: $health"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::laya-serve did not become healthy"
+          tail -60 "$RUNNER_TEMP/laya-serve.log"
+          exit 1
+
+      - name: Run benchmark
+        working-directory: showcase/snake-race
+        env:
+          LAYA_BASE_URL: http://127.0.0.1:8000
+          LAYA_MODEL: ${{ matrix.checkpoint }}
+          BENCH_RUNNER: GitHub ubuntu-latest, local CPU, laya-serve
+        run: node bench.mjs --no-mock --n "$POSITIONS" --warmup "$WARMUP" --seed "$SEED" --out "$RUNNER_TEMP/laya-py"
+
+      - name: Server log
+        if: always()
+        run: tail -60 "$RUNNER_TEMP/laya-serve.log" 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results-laya-py-${{ matrix.checkpoint }}
+          path: ${{ runner.temp }}/laya-py
+          if-no-files-found: ignore
+
   report:
     name: Report
-    needs: [jev, laya]
+    needs: [jev, laya, laya-py]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -235,13 +313,14 @@ jobs:
         env:
           JEV_RESULT: ${{ needs.jev.result }}
           LAYA_RESULT: ${{ needs.laya.result }}
+          LAYA_PY_RESULT: ${{ needs.laya-py.result }}
         run: |
           {
             echo "## Snake race benchmark: Jev vs Laya"
             echo
-            node showcase/snake-race/report.mjs results/results-jev results/results-laya/laya results/results-laya
+            node showcase/snake-race/report.mjs $(find results -name results.json -exec dirname {} \; | sort)
             echo
-            echo "Jobs: Jev \`$JEV_RESULT\`, Laya \`$LAYA_RESULT\`."
+            echo "Jobs: Jev \`$JEV_RESULT\`, Laya via System One \`$LAYA_RESULT\`, Laya via laya-serve \`$LAYA_PY_RESULT\`."
             echo
             echo "**Read with care.** Each lane ran on its own GitHub-hosted runner (\`ubuntu-latest\`, CPU only)."
             echo "Jev's latency includes the internet round trip from the runner to the TypeSafe API."
