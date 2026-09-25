@@ -10,7 +10,24 @@ Output of [`bench.mjs`](bench.mjs) from GitHub Actions: [run #8](https://github.
 - **Safe moves:** the chosen move did not hit a wall or the snake's own body.
 - **Closer to food:** the move reduced the distance to the food. This is counted only on positions where such a safe move existed.
 
-## Read this before quoting it
+## Laya runtimes and checkpoints (run #9)
+
+[Run #9](https://github.com/rajasekharponakala/awesome-system1-decision-models/actions/runs/36175016878), 25 September 2026: same 100 positions (seed 7), 10 warm-up calls discarded, each lane on its own CPU-only `ubuntu-latest` runner. This run compares ways of running Laya: its own server, [`laya-serve`](https://github.com/NandhaKishorM/laya) (v0.3.20, PyTorch, CPU), with each checkpoint, and System One Runtime.
+
+| Laya lane | p50 | p95 | p99 | Safe moves | Closer to food | Errors |
+|---|---|---|---|---|---|---|
+| `multilingual` via laya-serve | 586.8 ms | 609.4 ms | 610.6 ms | 81.0% | 43.4% | 0 |
+| `typed-decisions` via laya-serve | 1452.8 ms | 1504.9 ms | 1528.0 ms | 95.0% | 50.5% | 0 |
+| `english` via laya-serve | 1568.0 ms | 1626.1 ms | 1636.8 ms | 88.0% | 47.5% | 0 |
+| `laya-multilingual` via System One Runtime | 2218.9 ms | 2312.2 ms | 2453.1 ms | 81.0% | 45.5% | 0 |
+
+- **Runtime matters.** The same multilingual checkpoint is about 3.8× faster through `laya-serve` than through System One (587 ms vs 2,219 ms p50), with the same 81% safe moves. System One's time also varies between runs: 3,622 ms in run #8.
+- **Checkpoint matters for quality.** The fine-tuned `typed-decisions` checkpoint makes the best choices (95% safe moves). It was fine-tuned on a different task (the typed-decisions benchmark), not on Snake.
+- **Everything is still on CPU.** The English and typed-decisions checkpoints are larger (421M vs 322M) and slower here. Laya's authors report about 33 ms per question on a T4 GPU, so none of these are GPU numbers.
+- `laya-serve` reports every checkpoint as `laya-rl-agent` in the response's `model` field. The differing speed and quality across lanes show that each request's checkpoint choice was applied.
+- Jev also ran in this job, but its numbers are not published here while [TypeSafe's terms of use](https://typesafe.ai/) on benchmarking are being checked.
+
+## Read this before quoting it (run #8)
 
 These numbers describe **this setup**, not the models in general.
 

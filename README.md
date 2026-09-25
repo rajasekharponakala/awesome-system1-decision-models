@@ -198,7 +198,7 @@ Which model "wins" depends on the checkpoint, the hardware, and the task. The pu
 | [Laya's authors](https://github.com/NandhaKishorM/laya) | Fine-tuned `laya-typed-decisions` vs Jev, typed-decisions benchmark, T4 GPU | Laya 0.766, Jev 0.727 | Laya 32.8 ms, Jev 236–276 ms |
 | [laya-jev-lab](https://github.com/yibie/laya-jev-lab) | 40 Chinese support tickets, Laya on MLX (M4 Max) vs Jev API | Jev 78%, Laya 57% | Laya 7.6 ms, Jev 588 ms |
 | [laya-jev-lab](https://github.com/yibie/laya-jev-lab) cascade | Laya first; send cases below 0.60 confidence to Jev | 78% (same as Jev) | 327 ms mean, 45% of traffic handled locally |
-| [This repo](showcase/snake-race/RESULTS.md) | Snake positions, base `laya-multilingual` on a CPU-only CI runner vs Jev API | Jev 100% safe moves, Laya 81% | Jev 164 ms, Laya 3.6 s |
+| [This repo](showcase/snake-race/RESULTS.md) | Snake positions on CPU-only CI runners; Laya via `laya-serve` (all three checkpoints) and System One, vs Jev API | Jev 100% safe moves; Laya 81–95% depending on checkpoint (best: `typed-decisions`) | Jev 164 ms; Laya 0.59–2.2 s on CPU (fastest: `multilingual` via `laya-serve`) |
 
 The pattern: Laya is much faster wherever it runs on local accelerated hardware (GPU, MLX, Core ML), and its fine-tuned checkpoint is competitive in accuracy on tasks like its training data. Jev is more accurate out of the box on new tasks. A cascade gets most of both. Test on your own data before choosing.
 
