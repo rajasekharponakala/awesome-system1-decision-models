@@ -182,6 +182,7 @@ Jev-compatible open runtimes expose the same `POST /v1/systemone` wire format, s
 - [jevcal](https://github.com/abhixhek/jevcal): Tunes confidence thresholds on your own labeled data.
 - [Laya BENCHMARKS.md](https://github.com/NandhaKishorM/laya): Laya's per-language and per-task results, including where it fails.
 - [When a Judgment Layer's Fields Lie](https://doi.org/10.5281/zenodo.22901853): An independent measurement study.
+- [JEV-as-a-Judge: Accept When Confident, Escalate When Unsure](https://arxiv.org/abs/2609.26550) (Li, Miao, Krishnan, Padman, arXiv, September 2026): Compares Jev as an evaluator against 16 generative and reward-model judges, with blinded human adjudication. Jev lands within 3 points of a state-of-the-art LLM judge on preference and factuality at 0.36% of its fee. Its gap is concentrated in low-confidence verdicts, so a cascade that accepts confident verdicts and escalates the rest keeps 99% of the stronger judge's accuracy. [Hugging Face paper page](https://huggingface.co/papers/2609.26550)
 - [ejs-5/jev-benchmark](https://github.com/ejs-5/jev-benchmark): Jev on 868 real decisions from the n8n repo, with labels taken mechanically from git history (touched package, commit prefix, diff size, CI/build changes). Jev scores 85.6% on routing, 70.9% on triage, 63.9% on risk, and 37.2% on change size; GPT-5.6 Terra and Claude Opus 5 beat it on every task. It also finds Jev under-confident on yes/no questions and over-confident on others. The authors note they are not neutral.
 - [laya-jev-lab](https://github.com/yibie/laya-jev-lab): Independent Jev vs Laya measurements on 40 Chinese support tickets, plus a local-first cascade (see below).
 - [Luni/laya-jev-benchmark](https://huggingface.co/datasets/Luni/laya-jev-benchmark): A shared dataset for comparing Laya and Jev on the same inputs.
@@ -248,7 +249,7 @@ A System 1 model is the better choice when **the answer space is known ahead of 
 
 ## Design Patterns
 
-- **Confidence-gated cascade.** Ask the System 1 model first. If the confidence or probability clears your threshold, act on it. Otherwise escalate to an LLM or a human. This is the pattern that recurs most often across TypeSafe's docs. [OpenRouter recipe](https://openrouter.ai/docs/cookbook/evaluate-and-optimize/jev-verified-cascade)
+- **Confidence-gated cascade.** Ask the System 1 model first. If the confidence or probability clears your threshold, act on it. Otherwise escalate to an LLM or a human. This is the pattern that recurs most often across TypeSafe's docs. Independent evidence: [JEV-as-a-Judge](https://arxiv.org/abs/2609.26550) keeps 99% of a stronger judge's accuracy this way, and [laya-jev-lab](https://github.com/yibie/laya-jev-lab) matches Jev's accuracy with a Laya-first cascade. [OpenRouter recipe](https://openrouter.ai/docs/cookbook/evaluate-and-optimize/jev-verified-cascade)
 - **Parallel questions.** Batch every independent check into one call rather than making N calls. [Official cookbook](https://docs.typesafe.ai/cookbooks/parallel_questions)
 - **Gate before you act.** Put a Noul in front of every destructive agent tool call. [OpenRouter recipe](https://openrouter.ai/docs/cookbook/building-agents/gate-tool-calls-with-jev)
 - **Hierarchical choice.** Break a large taxonomy into a tree of small Choice questions.
