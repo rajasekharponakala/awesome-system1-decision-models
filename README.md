@@ -182,6 +182,7 @@ Jev-compatible open runtimes expose the same `POST /v1/systemone` wire format, s
 - [jevcal](https://github.com/abhixhek/jevcal): Tunes confidence thresholds on your own labeled data.
 - [Laya BENCHMARKS.md](https://github.com/NandhaKishorM/laya): Laya's per-language and per-task results, including where it fails.
 - [When a Judgment Layer's Fields Lie](https://doi.org/10.5281/zenodo.22901853): An independent measurement study.
+- [ejs-5/jev-benchmark](https://github.com/ejs-5/jev-benchmark): Jev on 868 real decisions from the n8n repo, with labels taken mechanically from git history (touched package, commit prefix, diff size, CI/build changes). Jev scores 85.6% on routing, 70.9% on triage, 63.9% on risk, and 37.2% on change size; GPT-5.6 Terra and Claude Opus 5 beat it on every task. It also finds Jev under-confident on yes/no questions and over-confident on others. The authors note they are not neutral.
 - [laya-jev-lab](https://github.com/yibie/laya-jev-lab): Independent Jev vs Laya measurements on 40 Chinese support tickets, plus a local-first cascade (see below).
 - [Luni/laya-jev-benchmark](https://huggingface.co/datasets/Luni/laya-jev-benchmark): A shared dataset for comparing Laya and Jev on the same inputs.
 - [Using TypeSafe's Jev for evals (Langfuse)](https://langfuse.com/blog/2026-09-18-using-typesafes-jev-for-evals): Using Jev as an evaluator inside an LLM observability stack.
@@ -279,8 +280,6 @@ To compare models head-to-head (e.g. Jev vs Laya), see **[SHOWCASE_IDEAS.md](SHO
 - [cobanov/awesome-jev](https://github.com/cobanov/awesome-jev): A comprehensive, source-backed list of Jev projects, and a source for many entries here.
 - [awesome-open-system-one](https://github.com/rupeshpoojary9/awesome-open-system-one): Focuses on open models.
 - [awesome-typesafe](https://github.com/AbdelStark/awesome-typesafe): Covers the wider TypeSafe ecosystem.
-- [Made with Laya](https://www.madewithlaya.com/): A directory of projects built with Laya.
-- [System One Models](https://systemonemodels.org/): Spec sheets, limits, and versions for System One models.
 - [Made with Jev](https://madewithjev.com): A directory of use cases.
 
 ---
