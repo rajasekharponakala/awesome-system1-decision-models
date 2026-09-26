@@ -8,7 +8,7 @@ The name comes from Daniel Kahneman's *Thinking, Fast and Slow*. **System 1** is
 
 [![Split-screen Snake race: Jev and Laya each steer a snake from the same seed](docs/media/snake-race.gif)](docs/media/snake-race.mp4)
 
-*Jev (TypeSafe API) vs base Laya on a CPU-only runner, playing [Snake](showcase/snake-race) at 4 moves per second. [Watch the full video with sound](docs/media/snake-race.mp4). The numbers come from one [measured benchmark run](showcase/snake-race/RESULTS.md) and describe that setup, not the models in general. Laya's authors report much lower latency on a GPU and higher accuracy from their fine-tuned checkpoint.*
+*Jev (TypeSafe API) vs Laya (multilingual checkpoint through its own `laya-serve`) on CPU-only runners, playing [Snake](showcase/snake-race) at 4 moves per second. [Watch the full video with sound](docs/media/snake-race.mp4). The numbers come from [measured benchmark runs](showcase/snake-race/RESULTS.md) (Jev: run #8, Laya: run #9) and describe that setup, not the models in general. Laya's authors report much lower latency on a GPU and higher accuracy from their fine-tuned checkpoint.*
 
 ## Contents
 

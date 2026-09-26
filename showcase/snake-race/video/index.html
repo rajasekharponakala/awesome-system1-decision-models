@@ -122,7 +122,7 @@
             <div class="foot"><span>median answer <b class="p50"></b></span><span class="verdict"></span></div>
           </div>
           <div class="lane" id="laneB" style="--c: var(--b)">
-            <h3>Laya <span>System One Runtime · CPU</span></h3>
+            <h3>Laya <span>laya-serve · CPU</span></h3>
             <div class="board"><div class="cellbg"></div><div class="flash"></div></div>
             <div class="foot"><span>median answer <b class="p50"></b></span><span class="verdict"></span></div>
           </div>
@@ -176,14 +176,14 @@
       // Copied from ../RESULTS.md. Every number in the video comes from here,
       // and the race replay and ladder are derived from these p50 values.
       const RESULTS = {
-        source: "GitHub Actions run #8 · 100 positions · seed 7 · CPU-only runners",
+        source: "GitHub Actions · 100 positions · seed 7 · CPU-only runners · Jev: run #8 · Laya: run #9",
         caveat: [
-          "Jev: TypeSafe API over the internet from the runner. Laya: laya-multilingual on a 4-vCPU runner, no GPU.",
+          "Jev: TypeSafe API over the internet. Laya: multilingual checkpoint via laya-serve on a 4-vCPU runner, no GPU.",
           "Laya's authors report ~33 ms on a T4 GPU. This CPU setup is not a general Laya speed claim.",
         ],
         lanes: [
           { name: "Jev", served: "jev-1.13.0", p50: 164.3, p95: 243.4, safe: 100.0, color: "--a" },
-          { name: "Laya", served: "laya-multilingual · CPU", p50: 3621.6, p95: 3731.7, safe: 81.0, color: "--b" },
+          { name: "Laya", served: "multilingual · laya-serve · CPU", p50: 586.8, p95: 609.4, safe: 81.0, color: "--b" },
         ],
       };
       // ---------------------------------------------------------------------
