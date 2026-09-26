@@ -72,6 +72,7 @@ Jev-compatible open runtimes expose the same `POST /v1/systemone` wire format, s
 ### Commercial
 
 - [Jev (TypeSafe AI)](https://typesafe.ai/): The model that defined the category, released 15 September 2026. It is served at `POST https://api.typesafe.ai/v1/systemone` (model route `jev-latest`). TypeSafe reports it as 40–200× faster than frontier LLMs on comparable tasks. [Launch post](https://typesafe.ai/blog/introducing-system-one-models-and-jev) · [Docs](https://docs.typesafe.ai/) · [Models & pricing](https://docs.typesafe.ai/models) · [Known limitations (Jev 1.13)](https://docs.typesafe.ai/model-jaggedness/jev-1.13)
+- [Hesperan](https://hesperan.com/): A hosted, closed-weights decision model (Hesperan 1), served at `POST https://api.hesperan.com/v1/systemone` in the TypeSafe request format (choice, score, noul; string criteria, answers without `confidence` or `legend`). Decision profiles calibrate one decision on 100–2,000 of your own labelled cases, set the threshold for a target precision and return `auto` or `review` per call. Billed by input tokens: 1M free a month, then $0.25 per 1M pay as you go, or Pro ($9/month, 40M tokens). [Docs](https://hesperan.com/docs) · [OpenAPI](https://hesperan.com/openapi.json) · [Benchmarks (authors' own measurements)](https://hesperan.com/benchmarks).
 
 ### Open Weights
 
