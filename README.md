@@ -264,6 +264,7 @@ To compare models head-to-head (e.g. Jev vs Laya), see **[SHOWCASE_IDEAS.md](SHO
 
 ## Guides and Articles
 
+- [Jev in the Wild](https://arxiv.org/abs/2609.30216): A data-driven survey and analysis of 2,170 public GitHub Jev projects, covering early ecosystem growth, application domains, and decision-use patterns.
 - [Introducing System One Models and Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev): The launch post from TypeSafe.
 - [Confidence vs. probability](https://docs.typesafe.ai/confidence): Explains what each field means.
 - [Noul primitive docs](https://docs.typesafe.ai/primitives/noul)
