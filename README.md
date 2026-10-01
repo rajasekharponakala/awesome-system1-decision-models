@@ -170,6 +170,9 @@ Jev-compatible open runtimes expose the same `POST /v1/systemone` wire format, s
 - [Inbox Zero](https://github.com/elie222/inbox-zero): An email assistant with a Jev classifier backend.
 - [tax-doc-classifier](https://github.com/kyotofin/tax-doc-classifier): Classifies PDF documents.
 
+**Computer use**
+- [POK-Agent](https://github.com/Acekorneya/POK-Agent): An Apache-2.0 Windows 10/11 computer-use agent where an LLM plans and a System 1 model (Jev, or Laya run locally) picks UI targets, checks whether a step is done, and chooses branches, then replays recorded action programs for repeated tasks. The authors report 28% fewer planner calls on replayed Windows Agent Arena tasks with Jev.
+
 **Real-time control and games**
 - [jev-drone](https://github.com/RomanSlack/jev-drone): Controls a simulated quadrotor.
 - [Embodied Jev](https://github.com/FBddcz/embodied-jev): A robot-arm workbench in MuJoCo.
