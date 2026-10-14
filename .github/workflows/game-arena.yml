@@ -1,0 +1,233 @@
+name: Game arena (open models)
+
+# Plays every game in showcase/game-arena against every open-weights System 1
+# model that can run on a GitHub-hosted CPU runner, one model per job, then
+# merges the results into one report and a summary.json for the launch video.
+#
+# No job here receives secrets: every model job installs and runs third-party
+# code, so none of them can read a key. Hosted models (Jev and the other
+# commercial APIs) are not part of this workflow.
+#
+# Models too large for a 16 GB CPU runner are listed in
+# showcase/game-arena/RESULTS.md with the reason they were left out.
+
+on:
+  workflow_dispatch:
+    inputs:
+      snake:
+        description: Snake positions per lane
+        default: "60"
+      flappy:
+        description: Flappy Bird positions per lane
+        default: "40"
+      seed:
+        description: Seed for the Snake and Flappy positions
+        default: "7"
+  push:
+    paths:
+      - showcase/game-arena/**
+      - "!showcase/game-arena/**/*.md"
+      - showcase/snake-race/snake.mjs
+      - .github/workflows/game-arena.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: game-arena-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SNAKE: ${{ inputs.snake || '60' }}
+  FLAPPY: ${{ inputs.flappy || '40' }}
+  SEED: ${{ inputs.seed || '7' }}
+  WARMUP: "5"
+  LAYA_VERSION: "0.4.7"
+  VON_VERSION: "1.3.7"
+  PHOCINAE_SERVER_VERSION: "0.1.6"
+  KEV_SHA: 0a6d3fafeee7f3f76a9a4a522bf8b9d5b50bd7e5
+  ONEJEV_SHA: f2daa2e23b375a2f26bd0dba5a38d25923e0dc74
+  GEMMA_SHA: cc75aa8042dec965003210fdba033fee8759735e
+
+jobs:
+  lane:
+    name: ${{ matrix.label }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { id: laya-english, kind: laya, label: "Laya english (421M)", model: english, format: jev }
+          - { id: laya-multilingual, kind: laya, label: "Laya multilingual (322M)", model: multilingual, format: jev }
+          - { id: laya-typed-decisions, kind: laya, label: "Laya typed-decisions (421M)", model: typed-decisions, format: jev }
+          - { id: von, kind: von, label: "Von 1.3 (395M)", model: von-latest, format: jev }
+          - { id: largha, kind: largha, label: "Largha (144M)", model: Phocinae-Largha-150M-v1, format: phocinae }
+          - { id: kev-0.8b, kind: kev, label: "Kev-0.8B", model: kev-0.8b, format: jev }
+          - { id: onejev-0.8b, kind: onejev, label: "OneJev 1.5-0.8B", model: onejev, format: jev }
+          - { id: system-one-gemma, kind: gemma, label: "System One Gemma (270M)", model: system-one-gemma, format: jev }
+    env:
+      PORT: "8000"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pip and Hugging Face downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/huggingface
+          key: arena-${{ matrix.id }}-${{ runner.os }}-v1
+
+      # One CPU build for every lane. Kev needs torch < 2.9 and OneJev needs a
+      # matching torchvision, so pin both rather than let pip pull CUDA wheels.
+      - name: Install CPU PyTorch
+        run: pip install --quiet torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cpu
+
+      # ---- one install-and-start step per kind of server -------------------------
+      - name: Start laya-serve
+        if: matrix.kind == 'laya'
+        env:
+          LAYA_DEVICE: cpu
+          LAYA_MODELS: ${{ matrix.model }}
+          LAYA_PORT: ${{ env.PORT }}
+        run: |
+          pip install --quiet "laya[serve]==$LAYA_VERSION"
+          export LAYA_THREADS=$(nproc)
+          nohup laya-serve > "$RUNNER_TEMP/server.log" 2>&1 &
+
+      - name: Start von serve
+        if: matrix.kind == 'von'
+        run: |
+          pip install --quiet "von-sdk[intel]==$VON_VERSION"
+          nohup von serve --host 127.0.0.1 --port "$PORT" > "$RUNNER_TEMP/server.log" 2>&1 &
+
+      - name: Start phocinae-server (Largha)
+        if: matrix.kind == 'largha'
+        run: |
+          pip install --quiet "phocinae-server==$PHOCINAE_SERVER_VERSION" "huggingface_hub[cli]"
+          hf download Phocinae/Phocinae-Largha-150M-v1 --local-dir "$RUNNER_TEMP/largha"
+          PHOC_MODEL_DIR="$RUNNER_TEMP/largha" PHOC_DEVICE=cpu PHOC_PORT="$PORT" PHOC_THREADS=$(nproc) \
+            nohup python -m phocinae.main > "$RUNNER_TEMP/server.log" 2>&1 &
+
+      - name: Start kev.serve (Kev-0.8B)
+        if: matrix.kind == 'kev'
+        run: |
+          git init -q "$RUNNER_TEMP/kev" && cd "$RUNNER_TEMP/kev"
+          git fetch -q --depth 1 https://github.com/jaredpalmer/kev "$KEV_SHA" && git checkout -q FETCH_HEAD
+          pip install --quiet -e ".[serve]"
+          nohup python -m kev.serve --run jaredpalmer/kev-0.8b --device cpu --host 127.0.0.1 --port "$PORT" > "$RUNNER_TEMP/server.log" 2>&1 &
+
+      - name: Start qev serve (OneJev 1.5-0.8B)
+        if: matrix.kind == 'onejev'
+        run: |
+          pip install --quiet "qev[torch] @ git+https://github.com/OmniJev/OneJev.git@$ONEJEV_SHA"
+          nohup qev serve --model OmniJev/OneJev1.5-0.8B --name onejev --device cpu --dtype float32 \
+            --no-cuda-graphs --no-gpu-preprocess --host 127.0.0.1 --port "$PORT" > "$RUNNER_TEMP/server.log" 2>&1 &
+
+      - name: Start System One Gemma (arena wrapper)
+        if: matrix.kind == 'gemma'
+        run: |
+          git init -q "$RUNNER_TEMP/gemma" && cd "$RUNNER_TEMP/gemma"
+          git fetch -q --depth 1 https://github.com/akash-kamat/system-one-gemma "$GEMMA_SHA" && git checkout -q FETCH_HEAD
+          pip install --quiet "transformers>=4.56" "peft>=0.8" accelerate
+          # google/gemma-3-270m is gated and this job gets no token, so load the
+          # same weights from Unsloth's ungated mirror.
+          GEMMA_ADAPTER="$RUNNER_TEMP/gemma/pretrained-scorer" GEMMA_BASE=unsloth/gemma-3-270m \
+            nohup python "$GITHUB_WORKSPACE/showcase/game-arena/servers/gemma_server.py" --port "$PORT" > "$RUNNER_TEMP/server.log" 2>&1 &
+
+      - name: Wait for the server
+        timeout-minutes: 30
+        run: |
+          for i in $(seq 1 340); do
+            if out=$(curl -sf "http://127.0.0.1:$PORT/health" || curl -sf "http://127.0.0.1:$PORT/v1/models"); then
+              echo "up: $out"
+              exit 0
+            fi
+            if [ $((i % 12)) -eq 0 ]; then echo "[waiting $((i * 5)) s]"; tail -3 "$RUNNER_TEMP/server.log"; fi
+            sleep 5
+          done
+          echo "::error::${{ matrix.label }} did not start"
+          tail -80 "$RUNNER_TEMP/server.log"
+          exit 1
+
+      - name: Smoke test (one decision)
+        working-directory: showcase/game-arena
+        env:
+          ARENA_URL: http://127.0.0.1:${{ env.PORT }}
+          ARENA_LANE: ${{ matrix.id }}
+          ARENA_LABEL: ${{ matrix.label }}
+          ARENA_MODEL: ${{ matrix.model }}
+          ARENA_FORMAT: ${{ matrix.format }}
+        run: node arena.mjs --games spam --warmup 0 | head -5
+
+      - name: Play every game
+        working-directory: showcase/game-arena
+        env:
+          ARENA_URL: http://127.0.0.1:${{ env.PORT }}
+          ARENA_LANE: ${{ matrix.id }}
+          ARENA_LABEL: ${{ matrix.label }}
+          ARENA_MODEL: ${{ matrix.model }}
+          ARENA_FORMAT: ${{ matrix.format }}
+          ARENA_RUNNER: GitHub ubuntu-latest, 4 vCPU, no GPU
+        run: node arena.mjs --snake "$SNAKE" --flappy "$FLAPPY" --seed "$SEED" --warmup "$WARMUP" --out "$RUNNER_TEMP/out/${{ matrix.id }}"
+
+      - name: Server log
+        if: always()
+        run: tail -60 "$RUNNER_TEMP/server.log" 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arena-${{ matrix.id }}
+          path: ${{ runner.temp }}/out
+          if-no-files-found: ignore
+
+  report:
+    name: Report
+    needs: lane
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: arena-*
+          path: results
+          merge-multiple: true
+
+      - name: Write report
+        run: |
+          mkdir -p out
+          node showcase/game-arena/report.mjs $(find results -name results.json -exec dirname {} \; | sort) --summary out/summary.json > out/report.md
+          cp -r results out/lanes
+          {
+            echo "## Game arena: open System 1 models on CPU"
+            echo
+            cat out/report.md
+            echo
+            echo "**Read with care.** Every lane ran on its own GitHub-hosted runner (4 vCPU, no GPU). Latency is CPU latency; on a GPU every model here is much faster."
+            echo "Labels for the text games are hand-written in showcase/game-arena/fixtures.mjs."
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arena-report
+          path: out
