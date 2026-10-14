@@ -226,6 +226,13 @@ jobs:
             echo "**Read with care.** Every lane ran on its own GitHub-hosted runner (4 vCPU, no GPU). Latency is CPU latency; on a GPU every model here is much faster."
             echo "Labels for the text games are hand-written in showcase/game-arena/fixtures.mjs."
           } | tee -a "$GITHUB_STEP_SUMMARY"
+          # Also print summary.json, so the video data can be taken from the log
+          # when the artifact can't be downloaded.
+          echo "::group::summary.json"
+          echo "SUMMARY_JSON_BEGIN"
+          cat out/summary.json
+          echo "SUMMARY_JSON_END"
+          echo "::endgroup::"
 
       - uses: actions/upload-artifact@v4
         with:
