@@ -10,7 +10,7 @@ The name comes from Daniel Kahneman's *Thinking, Fast and Slow*. **System 1** is
 
 *The [game arena](showcase/game-arena): every open model that fits a GitHub runner with no GPU (Laya's three checkpoints, Von, Largha, Kev-0.8B, OneJev 1.5-0.8B and System One Gemma) plays six games, each chosen to test one kind of decision, plus a calibration duel. [Watch the full video with sound](docs/media/snake-race.mp4). Every number comes from [game-arena run #2](showcase/game-arena/RESULTS.md) and describes CPU-only runners and small hand-labelled test sets, not the models in general.*
 
-**What's best for what (open models, CPU):** Kev-0.8B for real-time moves · Laya english for spam/moderation · Kev-0.8B and OneJev 1.5-0.8B (tied) for multilingual routing, with Largha and Laya multilingual nearly as accurate at a fraction of the latency · OneJev 1.5-0.8B for severity scoring and calibration · Von for large option sets and the only model fast enough for 4 Hz on a CPU. [Full results](showcase/game-arena/RESULTS.md).
+**What's best for what (open models, CPU):** Kev-0.8B for real-time moves · Laya english for spam/moderation · Kev-0.8B and OneJev 1.5-0.8B (tied) for multilingual routing, with Largha and Laya multilingual nearly as accurate at a fraction of the latency · OneJev 1.5-0.8B for severity scoring and calibration · Von for large option sets, and Von or Largha when a CPU has to keep up with 4 decisions per second. [Full results](showcase/game-arena/RESULTS.md).
 
 ## Contents
 
