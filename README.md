@@ -6,9 +6,11 @@ The name comes from Daniel Kahneman's *Thinking, Fast and Slow*. **System 1** is
 
 ## See it in action
 
-[![Split-screen Snake race: Jev and Laya each steer a snake from the same seed](docs/media/snake-race.gif)](docs/media/snake-race.mp4)
+[![Game arena: eight open System 1 models play Snake, Flappy Bird, Spam Invaders, Babel Desk, On-call Pager, Text GeoGuessr and a Bankroll Duel](docs/media/snake-race.gif)](docs/media/snake-race.mp4)
 
-*Jev (TypeSafe API) vs Laya (multilingual checkpoint through its own `laya-serve`) on CPU-only runners, playing [Snake](showcase/snake-race) at 4 moves per second. [Watch the full video with sound](docs/media/snake-race.mp4). The numbers come from [measured benchmark runs](showcase/snake-race/RESULTS.md) (Jev: run #8, Laya: run #9) and describe that setup, not the models in general. Laya's authors report much lower latency on a GPU and higher accuracy from their fine-tuned checkpoint.*
+*The [game arena](showcase/game-arena): every open model that fits a GitHub runner with no GPU (Laya's three checkpoints, Von, Largha, Kev-0.8B, OneJev 1.5-0.8B and System One Gemma) plays six games, each chosen to test one kind of decision, plus a calibration duel. [Watch the full video with sound](docs/media/snake-race.mp4). Every number comes from [game-arena run #2](showcase/game-arena/RESULTS.md) and describes CPU-only runners and small hand-labelled test sets, not the models in general.*
+
+**What's best for what (open models, CPU):** Kev-0.8B for real-time moves · Laya english for spam/moderation · Kev-0.8B and OneJev 1.5-0.8B (tied) for multilingual routing, with Largha and Laya multilingual nearly as accurate at a fraction of the latency · OneJev 1.5-0.8B for severity scoring and calibration · Von for large option sets and the only model fast enough for 4 Hz on a CPU. [Full results](showcase/game-arena/RESULTS.md).
 
 ## Contents
 
@@ -214,6 +216,7 @@ Jev-compatible open runtimes expose the same `POST /v1/systemone` wire format, s
 - [Using TypeSafe's Jev for evals (Langfuse)](https://langfuse.com/blog/2026-09-18-using-typesafes-jev-for-evals): Using Jev as an evaluator inside an LLM observability stack.
 - [jev-measured](https://github.com/WallerChen/jev-measured): MIT-licensed, reproducible measurements of hosted Jev's cost (about $0.000015–0.000030 per decision), latency, and accuracy, plus a 633-item comparison of 13 decision models on OpenRouter (runs from September to October 2026). It finds Jev wrong on 11.5% of answers given at ≥90% confidence, against 2.3% for Clef and 3.2% for d1. Its labelled ticket set is small (27 items), so it is not enough to rank models. The author is unaffiliated with TypeSafe.
 - [Snake race benchmark (this repo)](showcase/snake-race/RESULTS.md): Jev vs Laya on identical Snake positions, run in GitHub Actions with published logs.
+- [Game arena (this repo)](showcase/game-arena/RESULTS.md): Eight open models (Laya ×3, Von, Largha, Kev-0.8B, OneJev 1.5-0.8B, System One Gemma) on six games covering Choice, Noul and Score, plus a Kelly-betting calibration duel, on CPU-only GitHub runners. Labels are hand-written and test sets are small (24–60 items per game).
 
 ### Head-to-head: Jev vs Laya
 
@@ -276,7 +279,7 @@ A System 1 model is the better choice when **the answer space is known ahead of 
 | Large-model accuracy or image input, self-hosted | **OpenJev** (DiffusionGemma, 24 GB+ GPU) or **OneJev** (images and video, 0.8B–27B) |
 | English and Chinese on small hardware | **Largha** (144M) |
 
-> Before choosing, benchmark on **your own labeled data**. Published numbers come from the model authors, and the Laya authors note that base checkpoints are near random on zero-shot typed decisions until fine-tuned.
+> For a side-by-side of the open models on the same tasks, see the [game arena results](showcase/game-arena/RESULTS.md). Before choosing, benchmark on **your own labeled data**. Published numbers come from the model authors, and the Laya authors note that base checkpoints are near random on zero-shot typed decisions until fine-tuned.
 
 ## Design Patterns
 
@@ -291,7 +294,9 @@ A System 1 model is the better choice when **the answer space is known ahead of 
 
 To compare models head-to-head (e.g. Jev vs Laya), see **[SHOWCASE_IDEAS.md](SHOWCASE_IDEAS.md)**. It collects 60+ game, puzzle, and simulation ideas: real-time arcade games, bullet chess, quiz buzzers, calibration betting duels, multilingual rounds, NPC swarms, and games that are secretly real work. It also has a fairness checklist so the race measures the models rather than your network.
 
-**Runnable:** [`showcase/snake-race`](showcase/snake-race) is a split-screen Snake race between Jev and Laya (or any `/v1/systemone` backend), with a fixed-tick ladder, a free-run mode, and a headless benchmark. It has no dependencies.
+**Runnable:**
+- [`showcase/game-arena`](showcase/game-arena) plays Snake, Flappy Bird, Spam Invaders, Babel Desk, On-call Pager and Text GeoGuessr against any `/v1/systemone` backend, and scores calibration with a Bankroll Duel. A GitHub workflow runs it against every open model that fits a CPU runner and renders the launch video from the results.
+- [`showcase/snake-race`](showcase/snake-race) is a split-screen Snake race between Jev and Laya (or any `/v1/systemone` backend), with a fixed-tick ladder, a free-run mode, and a headless benchmark. It has no dependencies.
 
 ## Guides and Articles
 

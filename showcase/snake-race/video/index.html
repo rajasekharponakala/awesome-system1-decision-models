@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1920, height=1080" />
-    <title>System 1 Snake Race</title>
+    <title>System 1 Game Arena</title>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <style>
       :root {
@@ -12,12 +12,20 @@
         --ink: #ecebe6;
         --muted: #9d9b93;
         --line: #34332f;
-        --grid: #272624;
+        --track: #272624;
         --food: #ff8a4c;
-        --a: #4dabf7;
-        --b: #da77f2;
-        --bad: #ff6b6b;
         --good: #69db7c;
+        --bad: #ff6b6b;
+        --l1: #4dabf7;
+        --l2: #da77f2;
+        --l3: #ffa94d;
+        --l4: #69db7c;
+        --l5: #ffd43b;
+        --l6: #ff8787;
+        --l7: #66d9e8;
+        --l8: #b197fc;
+        --l9: #f783ac;
+        --l10: #a9e34b;
         --sans: Inter, "Helvetica Neue", Arial, ui-sans-serif, system-ui, sans-serif;
         --mono: "JetBrains Mono", "DejaVu Sans Mono", ui-monospace, monospace;
       }
@@ -26,315 +34,715 @@
       #root { position: relative; width: 1920px; height: 1080px; color: var(--ink); font-family: var(--sans); }
       .clip { position: absolute; inset: 0; }
       .center { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-      .kicker { font-size: 30px; color: var(--muted); letter-spacing: 0.02em; }
       .mono { font-family: var(--mono); }
 
       /* Scene 1: hook */
       #s1 h1 { font-size: 124px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.02; }
       #s1 .line2 { margin-top: 36px; font-size: 54px; font-weight: 600; color: var(--muted); }
-      #s1 .line2 b { color: var(--bad); }
-      #s1 .chip { margin-top: 56px; font-size: 34px; padding: 16px 30px; border: 2px solid var(--line); border-radius: 14px; background: var(--panel); }
-      #s1 .chip i { font-style: normal; color: var(--a); }
+      #s1 .line2 b { color: var(--food); }
+      #s1 .chips { margin-top: 56px; display: flex; gap: 18px; }
+      #s1 .chip { font-size: 30px; padding: 14px 26px; border: 2px solid var(--line); border-radius: 14px; background: var(--panel); }
+      #s1 .chip i { font-style: normal; color: var(--l1); }
 
-      /* Scene 2: split-screen race */
-      #s2 .head { position: absolute; top: 64px; left: 0; right: 0; text-align: center; }
-      #s2 .head h2 { font-size: 64px; font-weight: 800; letter-spacing: -0.03em; }
-      #s2 .head p { margin-top: 12px; font-size: 30px; color: var(--muted); }
-      .lanes { position: absolute; top: 250px; left: 0; right: 0; display: flex; justify-content: center; gap: 80px; }
-      .lane { width: 560px; background: var(--panel); border: 2px solid var(--line); border-radius: 20px; padding: 26px 32px 30px; border-top: 8px solid var(--c); }
-      .lane h3 { display: flex; justify-content: space-between; align-items: baseline; font-size: 40px; font-weight: 800; }
-      .lane h3 span { font-size: 22px; font-weight: 600; color: var(--muted); }
-      .board { position: relative; width: 432px; height: 432px; margin: 22px auto 0; border-radius: 10px; overflow: hidden; background: var(--bg); }
-      .cellbg { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(12, 36px); }
-      .cellbg i { width: 36px; height: 36px; border: 2px solid var(--bg); background: var(--grid); }
-      .seg, .food { position: absolute; left: 0; top: 0; width: 32px; height: 32px; margin: 2px; border-radius: 6px; background: var(--c); opacity: 0; }
-      .seg.snake-head { filter: brightness(1.25); }
-      .food { background: var(--food); border-radius: 50%; }
-      .flash { position: absolute; inset: 0; background: var(--bad); opacity: 0; }
-      .lane .foot { margin-top: 22px; font-size: 26px; color: var(--muted); display: flex; justify-content: space-between; }
-      .lane .foot b { color: var(--ink); font-variant-numeric: tabular-nums; }
-      .verdict { font-weight: 700; }
-      .ok { color: var(--good); }
-      .miss { color: var(--bad); }
-      #s2 .note { position: absolute; bottom: 44px; left: 0; right: 0; text-align: center; font-size: 24px; color: var(--muted); }
+      /* Scene 2: line-up */
+      #s2 .head { position: absolute; top: 90px; left: 0; right: 0; text-align: center; }
+      #s2 h2 { font-size: 76px; font-weight: 800; letter-spacing: -0.03em; }
+      #s2 .head p { margin-top: 14px; font-size: 30px; color: var(--muted); }
+      .lineup { position: absolute; top: 330px; left: 50%; width: 1500px; margin-left: -750px; display: grid; grid-template-columns: 1fr 1fr; gap: 22px 40px; }
+      .lineup div { font-size: 40px; font-weight: 700; padding: 26px 30px; background: var(--panel); border: 2px solid var(--line); border-left: 10px solid var(--c); border-radius: 16px; opacity: 0; }
+      #s2 .note { position: absolute; bottom: 70px; left: 0; right: 0; text-align: center; font-size: 27px; color: var(--muted); }
 
-      /* Scene 3: tick-rate ladder */
-      #s3 .head { position: absolute; top: 90px; left: 0; right: 0; text-align: center; }
-      #s3 h2 { font-size: 76px; font-weight: 800; letter-spacing: -0.03em; }
-      #s3 .head p { margin-top: 14px; font-size: 30px; color: var(--muted); }
-      .ladder { position: absolute; top: 330px; left: 50%; width: 1320px; margin-left: -660px; }
-      .lrow, .lhead { display: grid; grid-template-columns: 420px 1fr 1fr; align-items: center; }
-      .lhead { font-size: 28px; color: var(--muted); padding: 0 36px 14px; }
-      .lhead span:nth-child(2) { color: var(--a); font-weight: 700; }
-      .lhead span:nth-child(3) { color: var(--b); font-weight: 700; }
-      .lrow { height: 116px; margin-top: 14px; padding: 0 36px; background: var(--panel); border: 2px solid var(--line); border-radius: 18px; font-size: 40px; opacity: 0; }
-      .lrow .hz { font-weight: 800; }
-      .lrow .hz small { font-size: 28px; font-weight: 500; color: var(--muted); margin-left: 12px; }
-      .pill { justify-self: start; font-size: 32px; font-weight: 700; padding: 10px 24px; border-radius: 99px; }
-      .pill.ok { background: rgba(105, 219, 124, 0.14); }
-      .pill.miss { background: rgba(255, 107, 107, 0.14); }
-      #s3 .note { position: absolute; bottom: 60px; left: 0; right: 0; text-align: center; font-size: 26px; color: var(--muted); }
+      /* Game scenes */
+      .game .head { position: absolute; top: 64px; left: 150px; right: 150px; }
+      .game .kicker { font-size: 28px; color: var(--muted); letter-spacing: 0.02em; }
+      .game .kicker b { color: var(--food); font-weight: 700; }
+      .game h2 { margin-top: 8px; font-size: 80px; font-weight: 800; letter-spacing: -0.03em; }
+      .game .tests { margin-top: 8px; font-size: 32px; color: var(--muted); }
+      .bars { position: absolute; top: 300px; left: 150px; right: 150px; }
+      .bar { display: grid; grid-template-columns: 590px 1fr 200px 150px; align-items: center; height: 64px; margin-bottom: 8px; font-size: 30px; opacity: 0; }
+      .bar .name { white-space: nowrap; }
+      .bar .name { font-weight: 700; display: flex; align-items: center; gap: 16px; }
+      .bar .name i { width: 18px; height: 18px; border-radius: 5px; background: var(--c); flex: none; }
+      .bar .track { position: relative; height: 40px; background: var(--track); border-radius: 10px; overflow: hidden; }
+      .bar .fill { position: absolute; inset: 0; background: var(--c); transform-origin: left center; border-radius: 10px; opacity: 0.85; }
+      .bar .val { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+      .bar .ms { text-align: right; font-size: 26px; color: var(--muted); font-variant-numeric: tabular-nums; }
+      .bar.dnf .val { color: var(--muted); font-weight: 500; font-size: 26px; }
+      .bar.win .name::after { content: "BEST"; margin-left: 8px; font-size: 20px; letter-spacing: 0.08em; padding: 6px 12px; border-radius: 99px; background: var(--good); color: #10230f; }
+      .cols { display: grid; grid-template-columns: 590px 1fr 200px 150px; font-size: 22px; color: var(--muted); margin-bottom: 10px; }
+      .cols span:nth-child(3), .cols span:nth-child(4) { text-align: right; }
+      .game .note { position: absolute; bottom: 44px; left: 150px; right: 150px; font-size: 27px; color: var(--muted); }
+      .game .note b { color: var(--ink); }
 
-      /* Scene 4: measured results */
-      #s4 .head { position: absolute; top: 96px; left: 0; right: 0; text-align: center; }
-      #s4 h2 { font-size: 76px; font-weight: 800; letter-spacing: -0.03em; }
-      #s4 .head p { margin-top: 14px; font-size: 30px; color: var(--muted); }
-      table { position: absolute; top: 330px; left: 50%; width: 1500px; margin-left: -750px; border-collapse: separate; border-spacing: 0 14px; font-size: 40px; font-variant-numeric: tabular-nums; }
-      th { font-size: 26px; color: var(--muted); font-weight: 600; text-align: right; padding: 0 28px; }
-      td { background: var(--panel); padding: 30px 28px; text-align: right; border-top: 2px solid var(--line); border-bottom: 2px solid var(--line); }
-      th:first-child, td:first-child { text-align: left; }
-      td:first-child { border-left: 8px solid var(--c); border-radius: 16px 0 0 16px; font-weight: 800; }
-      td:first-child small { display: block; font-size: 24px; color: var(--muted); font-weight: 500; margin-top: 6px; }
-      td:last-child { border-right: 2px solid var(--line); border-radius: 0 16px 16px 0; }
-      tr.r { opacity: 0; }
-      #s4 .caveat { position: absolute; bottom: 70px; left: 0; right: 0; text-align: center; font-size: 27px; line-height: 1.5; color: var(--muted); }
+      /* Verdicts */
+      #s10 .head { position: absolute; top: 70px; left: 0; right: 0; text-align: center; }
+      #s10 h2 { font-size: 76px; font-weight: 800; letter-spacing: -0.03em; }
+      #s10 .head p { margin-top: 12px; font-size: 28px; color: var(--muted); }
+      .verdicts { position: absolute; top: 250px; left: 50%; width: 1560px; margin-left: -780px; }
+      .verdict { display: grid; grid-template-columns: 430px 1fr 360px; align-items: center; height: 82px; margin-bottom: 12px; padding: 0 30px; background: var(--panel); border: 2px solid var(--line); border-left: 10px solid var(--c); border-radius: 16px; font-size: 34px; opacity: 0; }
+      .verdict .g { font-weight: 800; }
+      .verdict .g small { display: block; font-size: 21px; font-weight: 500; color: var(--muted); }
+      .verdict .w { font-weight: 700; }
+      .verdict .w small { font-size: 24px; font-weight: 500; color: var(--muted); margin-left: 10px; }
+      .verdict .f { text-align: right; font-size: 24px; color: var(--muted); }
+      #s10 .overall { position: absolute; bottom: 44px; left: 0; right: 0; text-align: center; font-size: 30px; color: var(--muted); line-height: 1.5; }
+      #s10 .overall small { display: block; font-size: 23px; }
+      #s10 .overall b { color: var(--ink); }
 
-      /* Scene 5: outro */
-      #s5 h2 { font-size: 132px; font-weight: 800; letter-spacing: -0.04em; }
-      #s5 .cmd { margin-top: 48px; font-size: 40px; padding: 22px 40px; border-radius: 16px; background: var(--panel); border: 2px solid var(--line); }
-      #s5 .cmd i { font-style: normal; color: var(--muted); }
-      #s5 .repo { margin-top: 44px; font-size: 34px; color: var(--muted); }
-      #s5 .dots { margin-top: 56px; display: flex; gap: 18px; }
-      #s5 .dots i { width: 34px; height: 34px; border-radius: 7px; background: var(--a); }
-      #s5 .dots i:nth-child(n + 4) { background: var(--b); }
-      #s5 .dots i.f { background: var(--food); border-radius: 50%; }
+      /* Outro */
+      #s11 h2 { font-size: 124px; font-weight: 800; letter-spacing: -0.04em; }
+      #s11 .cmd { margin-top: 48px; font-size: 36px; padding: 22px 40px; border-radius: 16px; background: var(--panel); border: 2px solid var(--line); }
+      #s11 .cmd i { font-style: normal; color: var(--muted); }
+      #s11 .repo { margin-top: 40px; font-size: 32px; color: var(--muted); }
+      #s11 .src { margin-top: 20px; font-size: 24px; color: var(--muted); }
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="21.5" data-width="1920" data-height="1080">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="41" data-width="1920" data-height="1080">
       <!-- Scene 1: hook -->
       <section id="s1" class="clip center" data-start="0" data-duration="3.5" data-track-index="0">
-        <h1 class="t1">Every move is one question.</h1>
-        <p class="line2 t2">Answer before the next tick, <b>or crash.</b></p>
-        <p class="chip mono t3">move = <i>choice</i>(up · down · left)</p>
+        <h1 class="t1"></h1>
+        <p class="line2 t2">One question per move. <b>Which one plays best?</b></p>
+        <div class="chips t3">
+          <span class="chip mono"><i>choice</i>(up · down · left)</span>
+          <span class="chip mono"><i>noul</i>(flap?)</span>
+          <span class="chip mono"><i>score</i>(1–5)</span>
+        </div>
       </section>
 
-      <!-- Scene 2: split-screen race -->
-      <section id="s2" class="clip" data-start="3.5" data-duration="7" data-track-index="0">
+      <!-- Scene 2: line-up -->
+      <section id="s2" class="clip" data-start="3.5" data-duration="4" data-track-index="0">
         <div class="head">
-          <h2>Snake at 4 moves per second</h2>
-          <p>Same seed, same question. Each snake waits for its own model.</p>
+          <h2>The line-up</h2>
+          <p>Every open model that fits a GitHub runner with no GPU.</p>
         </div>
-        <div class="lanes">
-          <div class="lane" id="laneA" style="--c: var(--a)">
-            <h3>Jev <span>TypeSafe API</span></h3>
-            <div class="board"><div class="cellbg"></div><div class="flash"></div></div>
-            <div class="foot"><span>median answer <b class="p50"></b></span><span class="verdict"></span></div>
-          </div>
-          <div class="lane" id="laneB" style="--c: var(--b)">
-            <h3>Laya <span>laya-serve · CPU</span></h3>
-            <div class="board"><div class="cellbg"></div><div class="flash"></div></div>
-            <div class="foot"><span>median answer <b class="p50"></b></span><span class="verdict"></span></div>
-          </div>
-        </div>
-        <p class="note">Replay built from the measured median latencies below. A snake whose model misses the 250 ms deadline can't turn.</p>
+        <div class="lineup"></div>
+        <p class="note">Bigger open models (Clef, OpenJev, Kev-4B and up, OneJev 4B and up) need a data-centre GPU and sit this one out.</p>
       </section>
 
-      <!-- Scene 3: tick-rate ladder -->
-      <section id="s3" class="clip" data-start="10.5" data-duration="5" data-track-index="0">
-        <div class="head">
-          <h2>Now turn up the tick rate.</h2>
-          <p>Does the median answer arrive before the next move?</p>
-        </div>
-        <div class="ladder">
-          <div class="lhead"><span>Tick rate</span><span>Jev</span><span>Laya</span></div>
-        </div>
-        <p class="note">Based on median (p50) latency. At p95 the slowest answers miss sooner.</p>
-      </section>
+      <!-- Game scenes, filled from RESULTS.games in order -->
+      <section id="g0" class="clip game" data-start="7.5" data-duration="3.6" data-track-index="0"></section>
+      <section id="g1" class="clip game" data-start="11.1" data-duration="3.6" data-track-index="0"></section>
+      <section id="g2" class="clip game" data-start="14.7" data-duration="3.6" data-track-index="0"></section>
+      <section id="g3" class="clip game" data-start="18.3" data-duration="3.6" data-track-index="0"></section>
+      <section id="g4" class="clip game" data-start="21.9" data-duration="3.6" data-track-index="0"></section>
+      <section id="g5" class="clip game" data-start="25.5" data-duration="3.6" data-track-index="0"></section>
+      <section id="g6" class="clip game" data-start="29.1" data-duration="3.6" data-track-index="0"></section>
 
-      <!-- Scene 4: measured results -->
-      <section id="s4" class="clip" data-start="15.5" data-duration="3.4" data-track-index="0">
+      <!-- Verdicts -->
+      <section id="s10" class="clip" data-start="32.7" data-duration="5.5" data-track-index="0">
         <div class="head">
-          <h2>Measured, not guessed.</h2>
+          <h2>What's best for what</h2>
           <p class="src"></p>
         </div>
-        <table>
-          <thead><tr><th>Model</th><th>p50</th><th>p95</th><th>Safe moves</th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <p class="caveat"></p>
+        <div class="verdicts"></div>
+        <p class="overall"></p>
       </section>
 
-      <!-- Scene 5: outro -->
-      <section id="s5" class="clip center" data-start="18.9" data-duration="2.6" data-track-index="0">
-        <h2 class="o1">Race them yourself.</h2>
-        <p class="cmd mono o2"><i>$</i> node showcase/snake-race/server.mjs</p>
+      <!-- Outro -->
+      <section id="s11" class="clip center" data-start="38.2" data-duration="2.8" data-track-index="0">
+        <h2 class="o1">Run the arena yourself.</h2>
+        <p class="cmd mono o2"><i>$</i> node showcase/game-arena/arena.mjs</p>
         <p class="repo o3">github.com/rajasekharponakala/awesome-system1-decision-models</p>
-        <div class="dots o4"><i></i><i></i><i></i><i></i><i></i><i class="f"></i></div>
+        <p class="src o3"></p>
       </section>
 
       <!-- Sound effects (Kenney, CC0), fetched into assets/sfx/ by the render workflow -->
       <audio id="sfx-1" data-start="0.25" data-duration="0.4" data-volume="0.7" data-track-index="2" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
       <audio id="sfx-2" data-start="3.5" data-duration="0.4" data-volume="0.6" data-track-index="2" src="assets/sfx/impactSoft_medium_004.ogg"></audio>
-      <audio id="sfx-3" data-start="10.5" data-duration="0.4" data-volume="0.6" data-track-index="2" src="assets/sfx/impactSoft_medium_002.ogg"></audio>
-      <audio id="sfx-4" data-start="15.5" data-duration="0.4" data-volume="0.6" data-track-index="2" src="assets/sfx/impactSoft_medium_003.ogg"></audio>
-      <audio id="sfx-5" data-start="18.9" data-duration="0.4" data-volume="0.7" data-track-index="2" src="assets/sfx/bong_001.ogg"></audio>
+      <audio id="sfx-3" data-start="7.5" data-duration="0.4" data-volume="0.5" data-track-index="2" src="assets/sfx/impactSoft_medium_002.ogg"></audio>
+      <audio id="sfx-4" data-start="14.7" data-duration="0.4" data-volume="0.5" data-track-index="2" src="assets/sfx/impactSoft_medium_003.ogg"></audio>
+      <audio id="sfx-5" data-start="21.9" data-duration="0.4" data-volume="0.5" data-track-index="2" src="assets/sfx/impactSoft_medium_002.ogg"></audio>
+      <audio id="sfx-6" data-start="29.1" data-duration="0.4" data-volume="0.5" data-track-index="2" src="assets/sfx/impactSoft_medium_003.ogg"></audio>
+      <audio id="sfx-7" data-start="32.7" data-duration="0.4" data-volume="0.6" data-track-index="2" src="assets/sfx/impactSoft_medium_004.ogg"></audio>
+      <audio id="sfx-8" data-start="38.2" data-duration="0.4" data-volume="0.7" data-track-index="2" src="assets/sfx/bong_001.ogg"></audio>
     </div>
 
     <script>
       // ---- Measured data -------------------------------------------------
-      // Copied from ../RESULTS.md. Every number in the video comes from here,
-      // and the race replay and ladder are derived from these p50 values.
+      // Every number in the video comes from this block, which to-video.mjs
+      // copies from the game-arena workflow's summary.json (see ../../game-arena/RESULTS.md).
+      // ---- RESULTS START (written by showcase/game-arena/to-video.mjs; do not edit by hand)
       const RESULTS = {
-        source: "GitHub Actions · 100 positions · seed 7 · CPU-only runners · Jev: run #8 · Laya: run #9",
-        caveat: [
-          "Jev: TypeSafe API over the internet. Laya: multilingual checkpoint via laya-serve on a 4-vCPU runner, no GPU.",
-          "Laya's authors report ~33 ms on a T4 GPU. This CPU setup is not a general Laya speed claim.",
+        "source": "GitHub Actions run #2 · 2026-10-14 · seed 7 · 4-vCPU runners, no GPU",
+        "caveat": "CPU-only latency. On a GPU every model here is much faster. Text-game labels are hand-written (showcase/game-arena/fixtures.mjs).",
+        "lanes": [
+          {
+            "id": "kev-0.8b",
+            "label": "Kev-0.8B",
+            "color": "--l1"
+          },
+          {
+            "id": "largha",
+            "label": "Largha (144M)",
+            "color": "--l2"
+          },
+          {
+            "id": "laya-english",
+            "label": "Laya english (421M)",
+            "color": "--l3"
+          },
+          {
+            "id": "laya-multilingual",
+            "label": "Laya multilingual (322M)",
+            "color": "--l4"
+          },
+          {
+            "id": "laya-typed-decisions",
+            "label": "Laya typed-decisions (421M)",
+            "color": "--l5"
+          },
+          {
+            "id": "onejev-0.8b",
+            "label": "OneJev 1.5-0.8B",
+            "color": "--l6"
+          },
+          {
+            "id": "system-one-gemma",
+            "label": "System One Gemma (270M)",
+            "color": "--l7"
+          },
+          {
+            "id": "von",
+            "label": "Von 1.3 (395M)",
+            "color": "--l8"
+          }
         ],
-        lanes: [
-          { name: "Jev", served: "jev-1.13.0", p50: 164.3, p95: 243.4, safe: 100.0, color: "--a" },
-          { name: "Laya", served: "multilingual · laya-serve · CPU", p50: 586.8, p95: 609.4, safe: 81.0, color: "--b" },
+        "games": [
+          {
+            "id": "snake",
+            "name": "Snake",
+            "primitive": "Choice (3 moves)",
+            "tests": "Reading a board fast, 4 moves per second",
+            "primary": "safe moves %",
+            "deadlineMs": 250,
+            "winner": "kev-0.8b",
+            "winners": [
+              "kev-0.8b"
+            ],
+            "fastest": "von",
+            "values": {
+              "kev-0.8b": {
+                "v": 100,
+                "p50": 1689.5,
+                "inTime": 0
+              },
+              "largha": {
+                "v": 91.667,
+                "p50": 266.6,
+                "inTime": 0
+              },
+              "laya-english": {
+                "v": 93.333,
+                "p50": 1435.1,
+                "inTime": 0
+              },
+              "laya-multilingual": {
+                "v": 76.667,
+                "p50": 408.3,
+                "inTime": 0
+              },
+              "laya-typed-decisions": {
+                "v": 96.667,
+                "p50": 965.5,
+                "inTime": 0
+              },
+              "onejev-0.8b": {
+                "v": 98.333,
+                "p50": 2761.3,
+                "inTime": 0
+              },
+              "system-one-gemma": {
+                "v": 95,
+                "p50": 1293.1,
+                "inTime": 0
+              },
+              "von": {
+                "v": 93.333,
+                "p50": 223.9,
+                "inTime": 100
+              }
+            }
+          },
+          {
+            "id": "flappy",
+            "name": "Flappy Bird",
+            "primitive": "Noul (flap?)",
+            "tests": "One yes/no per frame, 10 per second",
+            "primary": "accuracy %",
+            "deadlineMs": 100,
+            "winner": "kev-0.8b",
+            "winners": [
+              "kev-0.8b"
+            ],
+            "fastest": "largha",
+            "values": {
+              "kev-0.8b": {
+                "v": 65,
+                "p50": 1225.7,
+                "inTime": 0
+              },
+              "largha": {
+                "v": 55,
+                "p50": 181.2,
+                "inTime": 0
+              },
+              "laya-english": {
+                "v": 50,
+                "p50": 1023.5,
+                "inTime": 0
+              },
+              "laya-multilingual": {
+                "v": 50,
+                "p50": 265.7,
+                "inTime": 0
+              },
+              "laya-typed-decisions": {
+                "v": 50,
+                "p50": 679.9,
+                "inTime": 0
+              },
+              "onejev-0.8b": {
+                "v": 57.5,
+                "p50": 2109.2,
+                "inTime": 0
+              },
+              "system-one-gemma": {
+                "v": 50,
+                "p50": 601.9,
+                "inTime": 0
+              },
+              "von": {
+                "v": 50,
+                "p50": 206.9,
+                "inTime": 0
+              }
+            }
+          },
+          {
+            "id": "spam",
+            "name": "Spam Invaders",
+            "primitive": "Noul (spam?)",
+            "tests": "Content moderation, calibrated yes/no",
+            "primary": "F1",
+            "deadlineMs": null,
+            "winner": "laya-english",
+            "winners": [
+              "laya-english"
+            ],
+            "fastest": "largha",
+            "values": {
+              "kev-0.8b": {
+                "v": 0.629,
+                "p50": 581.8,
+                "inTime": null
+              },
+              "largha": {
+                "v": 0.633,
+                "p50": 83.4,
+                "inTime": null
+              },
+              "laya-english": {
+                "v": 0.98,
+                "p50": 462.9,
+                "inTime": null
+              },
+              "laya-multilingual": {
+                "v": 0.873,
+                "p50": 110.2,
+                "inTime": null
+              },
+              "laya-typed-decisions": {
+                "v": 0.81,
+                "p50": 296.6,
+                "inTime": null
+              },
+              "onejev-0.8b": {
+                "v": 0.703,
+                "p50": 1268.9,
+                "inTime": null
+              },
+              "system-one-gemma": {
+                "v": 0.676,
+                "p50": 216.1,
+                "inTime": null
+              },
+              "von": {
+                "v": 0.913,
+                "p50": 95.9,
+                "inTime": null
+              }
+            }
+          },
+          {
+            "id": "babel",
+            "name": "Babel Desk",
+            "primitive": "Choice (4 queues)",
+            "tests": "Ticket routing in 12 languages, 7 non-Latin scripts",
+            "primary": "accuracy %",
+            "deadlineMs": null,
+            "winner": "kev-0.8b",
+            "winners": [
+              "kev-0.8b",
+              "onejev-0.8b"
+            ],
+            "fastest": "von",
+            "values": {
+              "kev-0.8b": {
+                "v": 100,
+                "p50": 807.1,
+                "inTime": null
+              },
+              "largha": {
+                "v": 97.917,
+                "p50": 113.3,
+                "inTime": null
+              },
+              "laya-english": {
+                "v": 79.167,
+                "p50": 683.1,
+                "inTime": null
+              },
+              "laya-multilingual": {
+                "v": 95.833,
+                "p50": 146.2,
+                "inTime": null
+              },
+              "laya-typed-decisions": {
+                "v": 83.333,
+                "p50": 438.5,
+                "inTime": null
+              },
+              "onejev-0.8b": {
+                "v": 100,
+                "p50": 1474,
+                "inTime": null
+              },
+              "system-one-gemma": {
+                "v": 72.917,
+                "p50": 427.7,
+                "inTime": null
+              },
+              "von": {
+                "v": 47.917,
+                "p50": 107.1,
+                "inTime": null
+              }
+            }
+          },
+          {
+            "id": "pager",
+            "name": "On-call Pager",
+            "primitive": "Score (1-5)",
+            "tests": "Ordinal severity triage",
+            "primary": "within one level %",
+            "deadlineMs": null,
+            "winner": "onejev-0.8b",
+            "winners": [
+              "onejev-0.8b"
+            ],
+            "fastest": "von",
+            "values": {
+              "kev-0.8b": {
+                "v": 100,
+                "p50": 970.5,
+                "inTime": null
+              },
+              "largha": {
+                "v": 56.667,
+                "p50": 161.8,
+                "inTime": null
+              },
+              "laya-english": {
+                "v": 86.667,
+                "p50": 796.3,
+                "inTime": null
+              },
+              "laya-multilingual": {
+                "v": 63.333,
+                "p50": 209.4,
+                "inTime": null
+              },
+              "laya-typed-decisions": {
+                "v": 96.667,
+                "p50": 516.3,
+                "inTime": null
+              },
+              "onejev-0.8b": {
+                "v": 100,
+                "p50": 1878.2,
+                "inTime": null
+              },
+              "system-one-gemma": {
+                "v": 63.333,
+                "p50": 541.4,
+                "inTime": null
+              },
+              "von": {
+                "v": 93.333,
+                "p50": 111.2,
+                "inTime": null
+              }
+            }
+          },
+          {
+            "id": "geo",
+            "name": "Text GeoGuessr",
+            "primitive": "Choice (24 countries)",
+            "tests": "World knowledge over a large option set",
+            "primary": "accuracy %",
+            "deadlineMs": null,
+            "winner": "von",
+            "winners": [
+              "von"
+            ],
+            "fastest": "von",
+            "values": {
+              "kev-0.8b": {
+                "v": 70.833,
+                "p50": 1129,
+                "inTime": null
+              },
+              "largha": {
+                "v": 12.5,
+                "p50": 127.2,
+                "inTime": null
+              },
+              "laya-english": {
+                "v": 58.333,
+                "p50": 720.9,
+                "inTime": null
+              },
+              "laya-multilingual": {
+                "v": 62.5,
+                "p50": 174.1,
+                "inTime": null
+              },
+              "laya-typed-decisions": {
+                "v": 62.5,
+                "p50": 466.7,
+                "inTime": null
+              },
+              "onejev-0.8b": {
+                "v": 79.167,
+                "p50": 2277,
+                "inTime": null
+              },
+              "system-one-gemma": {
+                "v": 29.167,
+                "p50": 2627.9,
+                "inTime": null
+              },
+              "von": {
+                "v": 83.333,
+                "p50": 112,
+                "inTime": null
+              }
+            }
+          },
+          {
+            "id": "bankroll",
+            "name": "Bankroll Duel",
+            "primitive": "Noul probabilities",
+            "tests": "Calibration: bets its confidence on every yes/no answer",
+            "primary": "chips",
+            "deadlineMs": null,
+            "winner": "onejev-0.8b",
+            "winners": [
+              "onejev-0.8b"
+            ],
+            "fastest": null,
+            "values": {
+              "kev-0.8b": {
+                "v": 240461445,
+                "p50": null,
+                "inTime": null
+              },
+              "largha": {
+                "v": 3440,
+                "p50": null,
+                "inTime": null
+              },
+              "laya-english": {
+                "v": 6,
+                "p50": null,
+                "inTime": null
+              },
+              "laya-multilingual": {
+                "v": 0,
+                "p50": null,
+                "inTime": null
+              },
+              "laya-typed-decisions": {
+                "v": 1148400509,
+                "p50": null,
+                "inTime": null
+              },
+              "onejev-0.8b": {
+                "v": 2336213497,
+                "p50": null,
+                "inTime": null
+              },
+              "system-one-gemma": {
+                "v": 1186,
+                "p50": null,
+                "inTime": null
+              },
+              "von": {
+                "v": 2827505,
+                "p50": null,
+                "inTime": null
+              }
+            }
+          }
         ],
+        "overall": [
+          {
+            "id": "onejev-0.8b",
+            "rank": 2
+          },
+          {
+            "id": "kev-0.8b",
+            "rank": 2.7
+          },
+          {
+            "id": "laya-typed-decisions",
+            "rank": 3.7
+          },
+          {
+            "id": "von",
+            "rank": 4.4
+          },
+          {
+            "id": "laya-english",
+            "rank": 5.4
+          },
+          {
+            "id": "system-one-gemma",
+            "rank": 5.7
+          },
+          {
+            "id": "largha",
+            "rank": 5.9
+          },
+          {
+            "id": "laya-multilingual",
+            "rank": 5.9
+          }
+        ]
       };
+      // ---- RESULTS END
       // ---------------------------------------------------------------------
 
-      const SIZE = 12, CELL = 36, TICK = 0.25;
-      const fmt = (v, unit = "") => (v == null ? "n/a" : `${Math.round(v)}${unit}`);
-
-      // Seeded RNG and a tiny deterministic Snake so the replay is identical on every render.
-      function rng(seed) {
-        let a = seed >>> 0;
-        return () => {
-          a = (a + 0x6d2b79f5) >>> 0;
-          let t = a;
-          t = Math.imul(t ^ (t >>> 15), t | 1);
-          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-        };
-      }
-      const DIRS = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] };
-      const OPP = { up: "down", down: "up", left: "right", right: "left" };
-
-      function simulate(canSteer, ticks, seed) {
-        const rand = rng(seed);
-        const fresh = () => ({ snake: [[6, 4], [6, 3], [6, 2]], dir: "right" });
-        let g = fresh();
-        const placeFood = () => {
-          const taken = new Set(g.snake.map(([r, c]) => r * SIZE + c));
-          const free = [];
-          for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (!taken.has(r * SIZE + c)) free.push([r, c]);
-          return free[Math.floor(rand() * free.length)];
-        };
-        let food = placeFood();
-        const frames = [];
-        const hits = (cell, body) => cell[0] < 0 || cell[1] < 0 || cell[0] >= SIZE || cell[1] >= SIZE || body.some(([r, c]) => r === cell[0] && c === cell[1]);
-        for (let k = 0; k < ticks; k++) {
-          if (canSteer) {
-            let best = null, bestD = Infinity;
-            for (const d of Object.keys(DIRS)) {
-              if (d === OPP[g.dir]) continue;
-              const n = [g.snake[0][0] + DIRS[d][0], g.snake[0][1] + DIRS[d][1]];
-              if (hits(n, g.snake.slice(0, -1))) continue;
-              const dist = Math.abs(n[0] - food[0]) + Math.abs(n[1] - food[1]);
-              if (dist < bestD) { bestD = dist; best = d; }
-            }
-            if (best) g.dir = best;
-          }
-          const head = [g.snake[0][0] + DIRS[g.dir][0], g.snake[0][1] + DIRS[g.dir][1]];
-          if (hits(head, g.snake.slice(0, -1))) {
-            frames.push({ snake: g.snake.map((s) => s.slice()), food: food.slice(), crash: true });
-            g = fresh();
-            continue;
-          }
-          g.snake.unshift(head);
-          if (head[0] === food[0] && head[1] === food[1]) food = placeFood();
-          else g.snake.pop();
-          frames.push({ snake: g.snake.map((s) => s.slice()), food: food.slice(), crash: false });
+      const lanes = Object.fromEntries(RESULTS.lanes.map((l) => [l.id, l]));
+      const fmtVal = (v, metric) => {
+        if (v == null) return "did not finish";
+        if (metric === "chips") return v >= 1e6 ? v.toExponential(1).replace("e+", "e") : Math.round(v).toLocaleString("en-US");
+        if (/%$/.test(metric)) return `${v.toFixed(v >= 99.95 ? 0 : 1)}%`;
+        return v.toFixed(2);
+      };
+      const fmtMs = (v) => (v == null ? "" : v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${Math.round(v)} ms`);
+      const metricLabel = (m) => ({ "safe moves %": "safe moves", "accuracy %": "accuracy", F1: "F1 score", "within one level %": "within one level", chips: "chips left (start 1,000)" })[m] || m;
+      const width = (v, metric, all) => {
+        if (v == null) return 0;
+        if (metric === "chips") {
+          const max = Math.max(...all.filter((x) => x != null), 1);
+          return Math.max(0.02, Math.log10(v + 1) / Math.log10(max + 1));
         }
-        return frames;
-      }
+        return Math.max(0.02, /%$/.test(metric) ? v / 100 : v);
+      };
 
       const tl = gsap.timeline({ paused: true });
-      const at = (sceneStart, t) => sceneStart + t;
 
       // Scene 1
+      document.querySelector("#s1 .t1").textContent = `${RESULTS.lanes.length} open models. ${RESULTS.games.length} games.`;
       tl.fromTo("#s1 .t1", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.25);
-      tl.fromTo("#s1 .t2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 1.3);
-      tl.fromTo("#s1 .t3", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 2.1);
+      tl.fromTo("#s1 .t2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 1.2);
+      tl.fromTo("#s1 .chip", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)", stagger: 0.15 }, 2.0);
 
-      // Scene 2: build boards and schedule the replay
-      const S2 = 3.5, RACE_START = 0.9, RACE_TICKS = 22;
-      tl.fromTo("#s2 .head", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, at(S2, 0.05));
-      tl.fromTo("#s2 .lane", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out", stagger: 0.12 }, at(S2, 0.2));
-      tl.fromTo("#s2 .note", { opacity: 0 }, { opacity: 1, duration: 0.4 }, at(S2, 1.2));
+      // Scene 2
+      const S2 = 3.5;
+      const lineup = document.querySelector("#s2 .lineup");
+      RESULTS.lanes.forEach((l) => {
+        const d = document.createElement("div");
+        d.style.setProperty("--c", `var(${l.color})`);
+        d.textContent = l.label;
+        lineup.appendChild(d);
+      });
+      tl.fromTo("#s2 .head", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, S2 + 0.05);
+      tl.fromTo("#s2 .lineup div", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.3, ease: "power3.out", stagger: 0.12 }, S2 + 0.35);
+      tl.fromTo("#s2 .note", { opacity: 0 }, { opacity: 1, duration: 0.4 }, S2 + 1.6);
 
-      RESULTS.lanes.forEach((lane, i) => {
-        const el = document.querySelector(i === 0 ? "#laneA" : "#laneB");
-        const board = el.querySelector(".board");
-        board.querySelector(".cellbg").innerHTML = "<i></i>".repeat(SIZE * SIZE);
-        el.querySelector(".p50").textContent = fmt(lane.p50, " ms");
-        const inTime = lane.p50 != null && lane.p50 < TICK * 1000;
-        const verdict = el.querySelector(".verdict");
-        verdict.textContent = lane.p50 == null ? "not measured" : inTime ? "in time" : "too slow";
-        verdict.className = "verdict " + (inTime ? "ok" : "miss");
-
-        const segs = Array.from({ length: 14 }, (_, j) => {
-          const s = document.createElement("div");
-          s.className = "seg" + (j === 0 ? " snake-head" : "");
-          board.appendChild(s);
-          return s;
+      // Game scenes
+      const GAME_START = 7.5, GAME_LEN = 3.6;
+      RESULTS.games.slice(0, 7).forEach((g, gi) => {
+        const S = GAME_START + gi * GAME_LEN;
+        const el = document.getElementById(`g${gi}`);
+        const ids = Object.keys(g.values).sort((a, b) => (g.values[b].v ?? -1e30) - (g.values[a].v ?? -1e30));
+        const all = ids.map((id) => g.values[id].v);
+        const timed = g.deadlineMs ? ids.filter((id) => g.values[id].p50 != null && g.values[id].p50 <= g.deadlineMs).length : null;
+        const note = g.id === "bankroll"
+          ? "A Kelly bettor bets each yes/no probability on all Flappy Bird and Spam items. <b>Confident and wrong goes broke.</b>"
+          : g.deadlineMs
+          ? `Real time: <b>${g.deadlineMs} ms</b> per decision. <b>${timed} of ${ids.length}</b> models answer in time on this CPU (median).`
+          : g.fastest
+            ? `Fastest: <b>${lanes[g.fastest].label}</b>, ${fmtMs(g.values[g.fastest].p50)} median on CPU.`
+            : "";
+        el.innerHTML = `
+          <div class="head">
+            <p class="kicker">Game ${gi + 1} of ${RESULTS.games.length} · <b>${g.primitive}</b></p>
+            <h2>${g.name}</h2>
+            <p class="tests">${g.tests}</p>
+          </div>
+          <div class="bars">
+            <div class="cols"><span>Model</span><span>${metricLabel(g.primary)}</span><span></span><span>${g.id === "bankroll" ? "" : "median"}</span></div>
+            ${ids
+              .map((id) => {
+                const r = g.values[id];
+                const l = lanes[id];
+                return `<div class="bar${r.v == null ? " dnf" : ""}${g.winners.includes(id) ? " win" : ""}" style="--c: var(${l.color})">
+                  <span class="name"><i></i>${l.label}</span>
+                  <span class="track"><span class="fill" data-w="${width(r.v, g.primary, all)}"></span></span>
+                  <span class="val">${fmtVal(r.v, g.primary)}</span>
+                  <span class="ms">${g.id === "bankroll" ? "" : fmtMs(r.p50)}</span>
+                </div>`;
+              })
+              .join("")}
+          </div>
+          <p class="note">${note}</p>`;
+        tl.fromTo(el.querySelector(".head"), { opacity: 0, y: -24 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, S + 0.05);
+        tl.fromTo(el.querySelectorAll(".bar"), { opacity: 0 }, { opacity: 1, duration: 0.2, stagger: 0.06 }, S + 0.3);
+        el.querySelectorAll(".fill").forEach((f, i) => {
+          tl.fromTo(f, { scaleX: 0 }, { scaleX: Number(f.dataset.w), duration: 0.6, ease: "power2.out" }, S + 0.4 + i * 0.06);
         });
-        const food = document.createElement("div");
-        food.className = "food";
-        board.appendChild(food);
-        const flash = board.querySelector(".flash");
-
-        if (lane.p50 == null) return; // no data: show an empty board, never a made-up replay
-        const frames = simulate(inTime, RACE_TICKS, 42);
-        frames.forEach((f, k) => {
-          const t = at(S2, RACE_START + k * TICK);
-          segs.forEach((s, j) => {
-            const cell = f.snake[j];
-            tl.set(s, cell ? { x: cell[1] * CELL, y: cell[0] * CELL, opacity: 1 } : { opacity: 0 }, t);
-          });
-          tl.set(food, { x: f.food[1] * CELL, y: f.food[0] * CELL, opacity: 1 }, t);
-          if (f.crash) tl.fromTo(flash, { opacity: 0.55 }, { opacity: 0, duration: 0.35 }, t);
-        });
+        tl.fromTo(el.querySelector(".note"), { opacity: 0 }, { opacity: 1, duration: 0.3 }, S + 1.4);
       });
 
-      // Scene 3: tick-rate ladder derived from p50
-      const S3 = 10.5, RATES = [4, 6, 8, 10];
-      tl.fromTo("#s3 .head", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, at(S3, 0.05));
-      tl.fromTo("#s3 .lhead", { opacity: 0 }, { opacity: 1, duration: 0.3 }, at(S3, 0.4));
-      const ladder = document.querySelector("#s3 .ladder");
-      RATES.forEach((hz, i) => {
-        const deadline = 1000 / hz;
+      // Verdicts
+      const S10 = 32.7;
+      document.querySelector("#s10 .src").textContent = RESULTS.source;
+      const verdicts = document.querySelector("#s10 .verdicts");
+      RESULTS.games.forEach((g) => {
+        const w = g.winner ? lanes[g.winner] : null;
+        const names = g.winners.map((id) => lanes[id].label).join(" = ");
         const row = document.createElement("div");
-        row.className = "lrow";
-        const cell = (lane) => {
-          if (lane.p50 == null) return `<span class="pill">n/a</span>`;
-          const ok = lane.p50 < deadline;
-          return `<span class="pill ${ok ? "ok" : "miss"}">${ok ? "✓ in time" : "✗ misses"}</span>`;
-        };
-        row.innerHTML = `<span class="hz">${hz} Hz<small>${Math.round(deadline)} ms per move</small></span>${cell(RESULTS.lanes[0])}${cell(RESULTS.lanes[1])}`;
-        ladder.appendChild(row);
-        // Rows land 0.9 s apart so each one can be read.
-        tl.fromTo(row, { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.3, ease: "power3.out" }, at(S3, 0.8 + i * 0.9));
+        row.className = "verdict";
+        row.style.setProperty("--c", w ? `var(${w.color})` : "var(--line)");
+        row.innerHTML = `<span class="g">${g.name}<small>${g.primitive}</small></span><span class="w">${w ? names : "no finisher"}<small>${w ? fmtVal(g.values[g.winner].v, g.primary) + " " + metricLabel(g.primary) : ""}</small></span><span class="f">${g.fastest ? "fastest: " + lanes[g.fastest].label : ""}</span>`;
+        verdicts.appendChild(row);
       });
-      tl.fromTo("#s3 .note", { opacity: 0 }, { opacity: 1, duration: 0.4 }, at(S3, 4.1));
+      const leader = RESULTS.overall[0];
+      document.querySelector("#s10 .overall").innerHTML = leader ? `Best all-rounder (mean rank across all games): <b>${lanes[leader.id].label}</b><small>${RESULTS.caveat}</small>` : `<small>${RESULTS.caveat}</small>`;
+      tl.fromTo("#s10 .head", { opacity: 0, y: -24 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, S10 + 0.05);
+      tl.fromTo("#s10 .verdict", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.3, ease: "power3.out", stagger: 0.25 }, S10 + 0.35);
+      tl.fromTo("#s10 .overall", { opacity: 0 }, { opacity: 1, duration: 0.4 }, S10 + 2.4);
 
-      // Scene 4: measured table
-      const S4 = 15.5;
-      document.querySelector("#s4 .src").textContent = RESULTS.source;
-      document.querySelector("#s4 .caveat").innerHTML = RESULTS.caveat.join("<br>");
-      const tbody = document.querySelector("#s4 tbody");
-      RESULTS.lanes.forEach((lane) => {
-        const tr = document.createElement("tr");
-        tr.className = "r";
-        tr.style.setProperty("--c", `var(${lane.color})`);
-        tr.innerHTML = `<td>${lane.name}<small>${lane.served}</small></td><td>${fmt(lane.p50, " ms")}</td><td>${fmt(lane.p95, " ms")}</td><td>${lane.safe == null ? "n/a" : lane.safe.toFixed(0) + "%"}</td>`;
-        tbody.appendChild(tr);
-      });
-      tl.fromTo("#s4 .head", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, at(S4, 0.05));
-      tl.fromTo("#s4 tr.r", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out", stagger: 0.25 }, at(S4, 0.35));
-      tl.fromTo("#s4 .caveat", { opacity: 0 }, { opacity: 1, duration: 0.4 }, at(S4, 1.0));
-
-      // Scene 5: outro
-      const S5 = 18.9;
-      tl.fromTo("#s5 .o1", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.8)" }, at(S5, 0.05));
-      tl.fromTo("#s5 .o2", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, at(S5, 0.45));
-      tl.fromTo("#s5 .o3", { opacity: 0 }, { opacity: 1, duration: 0.35 }, at(S5, 0.75));
-      tl.fromTo("#s5 .dots i", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.25, stagger: 0.08 }, at(S5, 0.9));
+      // Outro
+      const S11 = 38.2;
+      document.querySelector("#s11 .src").textContent = RESULTS.source;
+      tl.fromTo("#s11 .o1", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.8)" }, S11 + 0.05);
+      tl.fromTo("#s11 .o2", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, S11 + 0.45);
+      tl.fromTo("#s11 .o3", { opacity: 0 }, { opacity: 1, duration: 0.35 }, S11 + 0.75);
 
       window.__timelines = window.__timelines || {};
       window.__timelines["main"] = tl;

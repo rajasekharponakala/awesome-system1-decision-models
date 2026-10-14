@@ -4,7 +4,8 @@
 //   node report.mjs results/* [--summary summary.json] > report.md
 //
 // "Best at a game" is the lane with the highest primary metric among lanes that
-// answered at least 90% of that game's items; ties go to the faster lane.
+// answered at least 90% of that game's items. Equal scores are split by the
+// game's tie-break metric; lanes still level share the win.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -28,6 +29,7 @@ const lanes = runs.flatMap((r) => r.lanes.map((l) => ({ ...l, runner: r.meta.run
 // every Flappy Bird and Spam Invaders item.
 const BANK = { id: "bankroll", name: "Bankroll Duel", primitive: "Noul probabilities", tests: "Calibration: bets its confidence on every yes/no answer", primary: "chips" };
 for (const l of lanes) {
+  if (l.games.bankroll && !l.games.flappy?.pairs) continue; // already computed (rebuilt from a summary)
   const pairs = ["flappy", "spam"].flatMap((g) => l.games[g]?.pairs ?? []);
   const expected = ["flappy", "spam"].reduce((s, g) => s + (l.games[g]?.items ?? 0), 0);
   l.games.bankroll = { items: expected, answered: pairs.length, chips: pairs.length ? Math.round(bankroll(pairs)) : null };
@@ -51,27 +53,36 @@ for (const g of games) {
     const r = l.games[g.id];
     return r && r[g.primary] != null && r.answered >= 0.9 * r.items;
   });
-  ok.sort((a, b) => b.games[g.id][g.primary] - a.games[g.id][g.primary] || (a.games[g.id]["p50 ms"] ?? 1e9) - (b.games[g.id]["p50 ms"] ?? 1e9));
+  const tb = (l) => {
+    const v = g.tiebreak ? l.games[g.id][g.tiebreak.metric] : null;
+    return v == null ? -Infinity : g.tiebreak.lowerIsBetter ? -v : v;
+  };
+  const level = (a, b) => a.games[g.id][g.primary] === b.games[g.id][g.primary] && tb(a) === tb(b);
+  ok.sort((a, b) => b.games[g.id][g.primary] - a.games[g.id][g.primary] || tb(b) - tb(a) || (a.games[g.id]["p50 ms"] ?? 1e9) - (b.games[g.id]["p50 ms"] ?? 1e9));
+  const winners = ok.filter((l) => level(l, ok[0]));
+  const next = ok[winners.length];
   const fastest = lanes.filter((l) => l.games[g.id]?.["p50 ms"] != null).sort((a, b) => a.games[g.id]["p50 ms"] - b.games[g.id]["p50 ms"])[0];
-  best[g.id] = { winner: ok[0]?.lane ?? null, value: ok[0]?.games[g.id][g.primary] ?? null, runnerUp: ok[1]?.lane ?? null, runnerUpValue: ok[1]?.games[g.id][g.primary] ?? null, fastest: fastest?.lane ?? null, fastestMs: fastest?.games[g.id]["p50 ms"] ?? null, ranking: ok.map((l) => l.lane) };
+  best[g.id] = { winner: ok[0]?.lane ?? null, winners: winners.map((l) => l.lane), value: ok[0]?.games[g.id][g.primary] ?? null, runnerUp: next?.lane ?? null, runnerUpValue: next?.games[g.id][g.primary] ?? null, fastest: fastest?.lane ?? null, fastestMs: fastest?.games[g.id]["p50 ms"] ?? null, ranking: ok.map((l) => l.lane), rank: Object.fromEntries(ok.map((l) => [l.lane, ok.findIndex((m) => level(m, l)) + 1])) };
 }
 
-// Overall: mean rank across games (lanes missing a game rank last there).
+// Overall: mean rank across games. Tied lanes share a rank; lanes that did not
+// finish a game rank last there.
 const overall = lanes
-  .map((l) => ({ lane: l.lane, rank: games.reduce((s, g) => s + (best[g.id].ranking.includes(l.lane) ? best[g.id].ranking.indexOf(l.lane) + 1 : lanes.length), 0) / games.length }))
+  .map((l) => ({ lane: l.lane, rank: games.reduce((s, g) => s + (best[g.id].rank[l.lane] ?? lanes.length), 0) / games.length }))
   .sort((a, b) => a.rank - b.rank);
 
 const out = [];
 out.push("### Best at each game", "", "| Game | Primitive | What it tests | Best | Runner-up | Fastest (p50) |", "|---|---|---|---|---|---|");
 for (const g of games) {
   const b = best[g.id];
-  out.push(`| ${g.name} | ${g.primitive} | ${g.tests} | ${b.winner ? `**${esc(b.winner)}** (${fmt(b.value, g.primary)} ${g.primary.replace(/ %$/, "")})` : "–"} | ${b.runnerUp ? `${esc(b.runnerUp)} (${fmt(b.runnerUpValue, g.primary)})` : "–"} | ${b.fastest ? `${esc(b.fastest)} (${fmt(b.fastestMs, "ms")})` : "–"} |`);
+  const who = b.winners.map((w) => `**${esc(w)}**`).join(" and ") + (b.winners.length > 1 ? ", tied" : "");
+  out.push(`| ${g.name} | ${g.primitive} | ${g.tests} | ${b.winner ? `${who} (${fmt(b.value, g.primary)} ${g.primary.replace(/ %$/, "")})` : "–"} | ${b.runnerUp ? `${esc(b.runnerUp)} (${fmt(b.runnerUpValue, g.primary)})` : "–"} | ${b.fastest ? `${esc(b.fastest)} (${fmt(b.fastestMs, "ms")})` : "–"} |`);
 }
 out.push("", `Overall (mean rank across ${games.length} games): ${overall.map((o, i) => `${i + 1}. ${esc(o.lane)} (${o.rank.toFixed(1)})`).join(" · ")}`, "");
 
 for (const g of games) {
   const cols = [...new Set(lanes.flatMap((l) => Object.keys(l.games[g.id] ?? {})))].filter((c) => !["pairs", "last error", "items"].includes(c));
-  out.push(`### ${g.name}: ${g.primitive}`, "", `${g.tests}. Best = highest **${g.primary}**.${g.deadlineMs ? ` Deadline ${g.deadlineMs} ms per decision.` : ""}`, "");
+  out.push(`### ${g.name}: ${g.primitive}`, "", `${g.tests}. Best = highest **${g.primary}**${g.tiebreak ? `; ties go to ${g.tiebreak.lowerIsBetter ? "lower" : "higher"} ${g.tiebreak.metric}` : ""}.${g.deadlineMs ? ` Deadline ${g.deadlineMs} ms per decision.` : ""}`, "");
   out.push(`| Lane | ${cols.join(" | ")} |`, `|---|${cols.map(() => "---").join("|")}|`);
   const sorted = [...lanes].sort((a, b) => (b.games[g.id]?.[g.primary] ?? -1e18) - (a.games[g.id]?.[g.primary] ?? -1e18));
   for (const l of sorted) out.push(`| ${esc(l.lane)} | ${cols.map((c) => fmt(l.games[g.id]?.[c], c)).join(" | ")} |`);

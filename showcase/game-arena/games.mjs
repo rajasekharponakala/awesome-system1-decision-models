@@ -200,13 +200,14 @@ function scoreScore(items, answers) {
   return { answered: n, "exact %": pct(exact, n), "within one level %": pct(near, n), MAE: n ? err / n : null };
 }
 
-// `primary` is the metric that decides "best at this game" (higher is better
-// unless `lowerIsBetter`). `deadlineMs` is set for the real-time games.
+// `primary` is the metric that decides "best at this game" (higher is better).
+// `tiebreak` settles equal primary scores; models still level are reported as
+// a tie. `deadlineMs` is set for the real-time games.
 export const GAMES = [
-  { id: "snake", name: "Snake", primitive: "Choice (3 moves)", tests: "Reading a board fast, 4 moves per second", deadlineMs: 250, primary: "safe moves %", build: (o) => snakeItems(o.snakeN, o.seed), score: scoreSnake },
-  { id: "flappy", name: "Flappy Bird", primitive: "Noul (flap?)", tests: "One yes/no per frame, 10 per second", deadlineMs: 100, primary: "accuracy %", build: (o) => flappyItems(o.flappyN, o.seed), score: scoreNoul },
-  { id: "spam", name: "Spam Invaders", primitive: "Noul (spam?)", tests: "Content moderation, calibrated yes/no", primary: "F1", build: spamItems, score: scoreNoul },
-  { id: "babel", name: "Babel Desk", primitive: "Choice (4 queues)", tests: "Ticket routing in 12 languages, 7 non-Latin scripts", primary: "accuracy %", build: babelItems, score: scoreChoice },
-  { id: "pager", name: "On-call Pager", primitive: "Score (1-5)", tests: "Ordinal severity triage", primary: "within one level %", build: pagerItems, score: scoreScore },
+  { id: "snake", name: "Snake", primitive: "Choice (3 moves)", tests: "Reading a board fast, 4 moves per second", deadlineMs: 250, primary: "safe moves %", tiebreak: { metric: "closer to food %" }, build: (o) => snakeItems(o.snakeN, o.seed), score: scoreSnake },
+  { id: "flappy", name: "Flappy Bird", primitive: "Noul (flap?)", tests: "One yes/no per frame, 10 per second", deadlineMs: 100, primary: "accuracy %", tiebreak: { metric: "Brier", lowerIsBetter: true }, build: (o) => flappyItems(o.flappyN, o.seed), score: scoreNoul },
+  { id: "spam", name: "Spam Invaders", primitive: "Noul (spam?)", tests: "Content moderation, calibrated yes/no", primary: "F1", tiebreak: { metric: "Brier", lowerIsBetter: true }, build: spamItems, score: scoreNoul },
+  { id: "babel", name: "Babel Desk", primitive: "Choice (4 queues)", tests: "Ticket routing in 12 languages, 7 non-Latin scripts", primary: "accuracy %", tiebreak: { metric: "other scripts %" }, build: babelItems, score: scoreChoice },
+  { id: "pager", name: "On-call Pager", primitive: "Score (1-5)", tests: "Ordinal severity triage", primary: "within one level %", tiebreak: { metric: "exact %" }, build: pagerItems, score: scoreScore },
   { id: "geo", name: "Text GeoGuessr", primitive: "Choice (24 countries)", tests: "World knowledge over a large option set", primary: "accuracy %", build: geoItems, score: scoreChoice },
 ];

@@ -1,0 +1,902 @@
+{
+  "date": "2026-10-14T10:53:45.616Z",
+  "meta": {
+    "date": "2026-10-14T10:53:45.616Z",
+    "seed": 7,
+    "snake": 60,
+    "flappy": 40,
+    "warmup": 5,
+    "node": "v22.23.3",
+    "runner": "GitHub ubuntu-latest, 4 vCPU, no GPU"
+  },
+  "games": [
+    {
+      "id": "snake",
+      "name": "Snake",
+      "primitive": "Choice (3 moves)",
+      "tests": "Reading a board fast, 4 moves per second",
+      "primary": "safe moves %",
+      "deadlineMs": 250,
+      "winner": "Kev-0.8B",
+      "winners": [
+        "Kev-0.8B"
+      ],
+      "value": 100,
+      "runnerUp": "OneJev 1.5-0.8B",
+      "runnerUpValue": 98.333,
+      "fastest": "Von 1.3 (395M)",
+      "fastestMs": 223.9,
+      "ranking": [
+        "Kev-0.8B",
+        "OneJev 1.5-0.8B",
+        "Laya typed-decisions (421M)",
+        "System One Gemma (270M)",
+        "Laya english (421M)",
+        "Von 1.3 (395M)",
+        "Largha (144M)",
+        "Laya multilingual (322M)"
+      ],
+      "rank": {
+        "Kev-0.8B": 1,
+        "OneJev 1.5-0.8B": 2,
+        "Laya typed-decisions (421M)": 3,
+        "System One Gemma (270M)": 4,
+        "Laya english (421M)": 5,
+        "Von 1.3 (395M)": 6,
+        "Largha (144M)": 7,
+        "Laya multilingual (322M)": 8
+      }
+    },
+    {
+      "id": "flappy",
+      "name": "Flappy Bird",
+      "primitive": "Noul (flap?)",
+      "tests": "One yes/no per frame, 10 per second",
+      "primary": "accuracy %",
+      "deadlineMs": 100,
+      "winner": "Kev-0.8B",
+      "winners": [
+        "Kev-0.8B"
+      ],
+      "value": 65,
+      "runnerUp": "OneJev 1.5-0.8B",
+      "runnerUpValue": 57.5,
+      "fastest": "Largha (144M)",
+      "fastestMs": 181.2,
+      "ranking": [
+        "Kev-0.8B",
+        "OneJev 1.5-0.8B",
+        "Largha (144M)",
+        "System One Gemma (270M)",
+        "Laya typed-decisions (421M)",
+        "Von 1.3 (395M)",
+        "Laya multilingual (322M)",
+        "Laya english (421M)"
+      ],
+      "rank": {
+        "Kev-0.8B": 1,
+        "OneJev 1.5-0.8B": 2,
+        "Largha (144M)": 3,
+        "System One Gemma (270M)": 4,
+        "Laya typed-decisions (421M)": 5,
+        "Von 1.3 (395M)": 6,
+        "Laya multilingual (322M)": 7,
+        "Laya english (421M)": 8
+      }
+    },
+    {
+      "id": "spam",
+      "name": "Spam Invaders",
+      "primitive": "Noul (spam?)",
+      "tests": "Content moderation, calibrated yes/no",
+      "primary": "F1",
+      "deadlineMs": null,
+      "winner": "Laya english (421M)",
+      "winners": [
+        "Laya english (421M)"
+      ],
+      "value": 0.98,
+      "runnerUp": "Von 1.3 (395M)",
+      "runnerUpValue": 0.913,
+      "fastest": "Largha (144M)",
+      "fastestMs": 83.4,
+      "ranking": [
+        "Laya english (421M)",
+        "Von 1.3 (395M)",
+        "Laya multilingual (322M)",
+        "Laya typed-decisions (421M)",
+        "OneJev 1.5-0.8B",
+        "System One Gemma (270M)",
+        "Largha (144M)",
+        "Kev-0.8B"
+      ],
+      "rank": {
+        "Laya english (421M)": 1,
+        "Von 1.3 (395M)": 2,
+        "Laya multilingual (322M)": 3,
+        "Laya typed-decisions (421M)": 4,
+        "OneJev 1.5-0.8B": 5,
+        "System One Gemma (270M)": 6,
+        "Largha (144M)": 7,
+        "Kev-0.8B": 8
+      }
+    },
+    {
+      "id": "babel",
+      "name": "Babel Desk",
+      "primitive": "Choice (4 queues)",
+      "tests": "Ticket routing in 12 languages, 7 non-Latin scripts",
+      "primary": "accuracy %",
+      "deadlineMs": null,
+      "winner": "Kev-0.8B",
+      "winners": [
+        "Kev-0.8B",
+        "OneJev 1.5-0.8B"
+      ],
+      "value": 100,
+      "runnerUp": "Largha (144M)",
+      "runnerUpValue": 97.917,
+      "fastest": "Von 1.3 (395M)",
+      "fastestMs": 107.1,
+      "ranking": [
+        "Kev-0.8B",
+        "OneJev 1.5-0.8B",
+        "Largha (144M)",
+        "Laya multilingual (322M)",
+        "Laya typed-decisions (421M)",
+        "Laya english (421M)",
+        "System One Gemma (270M)",
+        "Von 1.3 (395M)"
+      ],
+      "rank": {
+        "Kev-0.8B": 1,
+        "OneJev 1.5-0.8B": 1,
+        "Largha (144M)": 3,
+        "Laya multilingual (322M)": 4,
+        "Laya typed-decisions (421M)": 5,
+        "Laya english (421M)": 6,
+        "System One Gemma (270M)": 7,
+        "Von 1.3 (395M)": 8
+      }
+    },
+    {
+      "id": "pager",
+      "name": "On-call Pager",
+      "primitive": "Score (1-5)",
+      "tests": "Ordinal severity triage",
+      "primary": "within one level %",
+      "deadlineMs": null,
+      "winner": "OneJev 1.5-0.8B",
+      "winners": [
+        "OneJev 1.5-0.8B"
+      ],
+      "value": 100,
+      "runnerUp": "Kev-0.8B",
+      "runnerUpValue": 100,
+      "fastest": "Von 1.3 (395M)",
+      "fastestMs": 111.2,
+      "ranking": [
+        "OneJev 1.5-0.8B",
+        "Kev-0.8B",
+        "Laya typed-decisions (421M)",
+        "Von 1.3 (395M)",
+        "Laya english (421M)",
+        "System One Gemma (270M)",
+        "Laya multilingual (322M)",
+        "Largha (144M)"
+      ],
+      "rank": {
+        "OneJev 1.5-0.8B": 1,
+        "Kev-0.8B": 2,
+        "Laya typed-decisions (421M)": 3,
+        "Von 1.3 (395M)": 4,
+        "Laya english (421M)": 5,
+        "System One Gemma (270M)": 6,
+        "Laya multilingual (322M)": 7,
+        "Largha (144M)": 8
+      }
+    },
+    {
+      "id": "geo",
+      "name": "Text GeoGuessr",
+      "primitive": "Choice (24 countries)",
+      "tests": "World knowledge over a large option set",
+      "primary": "accuracy %",
+      "deadlineMs": null,
+      "winner": "Von 1.3 (395M)",
+      "winners": [
+        "Von 1.3 (395M)"
+      ],
+      "value": 83.333,
+      "runnerUp": "OneJev 1.5-0.8B",
+      "runnerUpValue": 79.167,
+      "fastest": "Von 1.3 (395M)",
+      "fastestMs": 112,
+      "ranking": [
+        "Von 1.3 (395M)",
+        "OneJev 1.5-0.8B",
+        "Kev-0.8B",
+        "Laya multilingual (322M)",
+        "Laya typed-decisions (421M)",
+        "Laya english (421M)",
+        "System One Gemma (270M)",
+        "Largha (144M)"
+      ],
+      "rank": {
+        "Von 1.3 (395M)": 1,
+        "OneJev 1.5-0.8B": 2,
+        "Kev-0.8B": 3,
+        "Laya multilingual (322M)": 4,
+        "Laya typed-decisions (421M)": 4,
+        "Laya english (421M)": 6,
+        "System One Gemma (270M)": 7,
+        "Largha (144M)": 8
+      }
+    },
+    {
+      "id": "bankroll",
+      "name": "Bankroll Duel",
+      "primitive": "Noul probabilities",
+      "tests": "Calibration: bets its confidence on every yes/no answer",
+      "primary": "chips",
+      "deadlineMs": null,
+      "winner": "OneJev 1.5-0.8B",
+      "winners": [
+        "OneJev 1.5-0.8B"
+      ],
+      "value": 2336213497,
+      "runnerUp": "Laya typed-decisions (421M)",
+      "runnerUpValue": 1148400509,
+      "fastest": null,
+      "fastestMs": null,
+      "ranking": [
+        "OneJev 1.5-0.8B",
+        "Laya typed-decisions (421M)",
+        "Kev-0.8B",
+        "Von 1.3 (395M)",
+        "Largha (144M)",
+        "System One Gemma (270M)",
+        "Laya english (421M)",
+        "Laya multilingual (322M)"
+      ],
+      "rank": {
+        "OneJev 1.5-0.8B": 1,
+        "Laya typed-decisions (421M)": 2,
+        "Kev-0.8B": 3,
+        "Von 1.3 (395M)": 4,
+        "Largha (144M)": 5,
+        "System One Gemma (270M)": 6,
+        "Laya english (421M)": 7,
+        "Laya multilingual (322M)": 8
+      }
+    }
+  ],
+  "overall": [
+    {
+      "lane": "OneJev 1.5-0.8B",
+      "rank": 2
+    },
+    {
+      "lane": "Kev-0.8B",
+      "rank": 2.7142857142857144
+    },
+    {
+      "lane": "Laya typed-decisions (421M)",
+      "rank": 3.7142857142857144
+    },
+    {
+      "lane": "Von 1.3 (395M)",
+      "rank": 4.428571428571429
+    },
+    {
+      "lane": "Laya english (421M)",
+      "rank": 5.428571428571429
+    },
+    {
+      "lane": "System One Gemma (270M)",
+      "rank": 5.714285714285714
+    },
+    {
+      "lane": "Largha (144M)",
+      "rank": 5.857142857142857
+    },
+    {
+      "lane": "Laya multilingual (322M)",
+      "rank": 5.857142857142857
+    }
+  ],
+  "lanes": [
+    {
+      "lane": "Kev-0.8B",
+      "id": "kev-0.8b",
+      "served": "kev-0.8b",
+      "runner": "GitHub ubuntu-latest, 4 vCPU, no GPU",
+      "games": {
+        "snake": {
+          "items": 60,
+          "answered": 60,
+          "safe moves %": 100,
+          "closer to food %": 67.797,
+          "p50 ms": 1689.5,
+          "p95 ms": 1779.1,
+          "in time %": 0,
+          "errors": 0
+        },
+        "flappy": {
+          "items": 40,
+          "answered": 40,
+          "accuracy %": 65,
+          "F1": 0.741,
+          "Brier": 0.226,
+          "bankroll": 7476.948,
+          "p50 ms": 1225.7,
+          "p95 ms": 1276.7,
+          "in time %": 0,
+          "errors": 0
+        },
+        "spam": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 72.917,
+          "F1": 0.629,
+          "Brier": 0.156,
+          "bankroll": 32160374.75,
+          "p50 ms": 581.8,
+          "p95 ms": 645.7,
+          "errors": 0
+        },
+        "babel": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 100,
+          "Latin script %": 100,
+          "other scripts %": 100,
+          "p50 ms": 807.1,
+          "p95 ms": 856.9,
+          "errors": 0
+        },
+        "pager": {
+          "items": 30,
+          "answered": 30,
+          "exact %": 50,
+          "within one level %": 100,
+          "MAE": 0.604,
+          "p50 ms": 970.5,
+          "p95 ms": 1024.6,
+          "errors": 0
+        },
+        "geo": {
+          "items": 24,
+          "answered": 24,
+          "accuracy %": 70.833,
+          "p50 ms": 1129,
+          "p95 ms": 1193.1,
+          "errors": 0
+        },
+        "bankroll": {
+          "items": 88,
+          "answered": 88,
+          "chips": 240461445
+        }
+      }
+    },
+    {
+      "lane": "Largha (144M)",
+      "id": "largha",
+      "served": "Phocinae-Largha-150M-v1",
+      "runner": "GitHub ubuntu-latest, 4 vCPU, no GPU",
+      "games": {
+        "snake": {
+          "items": 60,
+          "answered": 60,
+          "safe moves %": 91.667,
+          "closer to food %": 45.763,
+          "p50 ms": 266.6,
+          "p95 ms": 270.5,
+          "in time %": 0,
+          "errors": 0
+        },
+        "flappy": {
+          "items": 40,
+          "answered": 40,
+          "accuracy %": 55,
+          "F1": 0.182,
+          "Brier": 0.241,
+          "bankroll": 2058.438,
+          "p50 ms": 181.2,
+          "p95 ms": 182.9,
+          "in time %": 0,
+          "errors": 0
+        },
+        "spam": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 54.167,
+          "F1": 0.633,
+          "Brier": 0.245,
+          "bankroll": 1671.106,
+          "p50 ms": 83.4,
+          "p95 ms": 91.1,
+          "errors": 0
+        },
+        "babel": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 97.917,
+          "Latin script %": 100,
+          "other scripts %": 95.833,
+          "p50 ms": 113.3,
+          "p95 ms": 120.6,
+          "errors": 0
+        },
+        "pager": {
+          "items": 30,
+          "answered": 30,
+          "exact %": 23.333,
+          "within one level %": 56.667,
+          "MAE": 1.7,
+          "p50 ms": 161.8,
+          "p95 ms": 168.1,
+          "errors": 0
+        },
+        "geo": {
+          "items": 24,
+          "answered": 24,
+          "accuracy %": 12.5,
+          "p50 ms": 127.2,
+          "p95 ms": 130.4,
+          "errors": 0
+        },
+        "bankroll": {
+          "items": 88,
+          "answered": 88,
+          "chips": 3440
+        }
+      }
+    },
+    {
+      "lane": "Laya english (421M)",
+      "id": "laya-english",
+      "served": "laya-rl-agent",
+      "runner": "GitHub ubuntu-latest, 4 vCPU, no GPU",
+      "games": {
+        "snake": {
+          "items": 60,
+          "answered": 60,
+          "safe moves %": 93.333,
+          "closer to food %": 47.458,
+          "p50 ms": 1435.1,
+          "p95 ms": 1494,
+          "in time %": 0,
+          "errors": 0
+        },
+        "flappy": {
+          "items": 40,
+          "answered": 40,
+          "accuracy %": 50,
+          "F1": 0.667,
+          "Brier": 0.451,
+          "bankroll": 0,
+          "p50 ms": 1023.5,
+          "p95 ms": 1054.9,
+          "in time %": 0,
+          "errors": 0
+        },
+        "spam": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 97.917,
+          "F1": 0.98,
+          "Brier": 0.027,
+          "bankroll": 1494050979160828.5,
+          "p50 ms": 462.9,
+          "p95 ms": 511,
+          "errors": 0
+        },
+        "babel": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 79.167,
+          "Latin script %": 91.667,
+          "other scripts %": 66.667,
+          "p50 ms": 683.1,
+          "p95 ms": 883.1,
+          "errors": 0
+        },
+        "pager": {
+          "items": 30,
+          "answered": 30,
+          "exact %": 36.667,
+          "within one level %": 86.667,
+          "MAE": 0.882,
+          "p50 ms": 796.3,
+          "p95 ms": 823.5,
+          "errors": 0
+        },
+        "geo": {
+          "items": 24,
+          "answered": 24,
+          "accuracy %": 58.333,
+          "p50 ms": 720.9,
+          "p95 ms": 747.6,
+          "errors": 0
+        },
+        "bankroll": {
+          "items": 88,
+          "answered": 88,
+          "chips": 6
+        }
+      }
+    },
+    {
+      "lane": "Laya multilingual (322M)",
+      "id": "laya-multilingual",
+      "served": "laya-rl-agent",
+      "runner": "GitHub ubuntu-latest, 4 vCPU, no GPU",
+      "games": {
+        "snake": {
+          "items": 60,
+          "answered": 60,
+          "safe moves %": 76.667,
+          "closer to food %": 28.814,
+          "p50 ms": 408.3,
+          "p95 ms": 430.9,
+          "in time %": 0,
+          "errors": 0
+        },
+        "flappy": {
+          "items": 40,
+          "answered": 40,
+          "accuracy %": 50,
+          "F1": 0.667,
+          "Brier": 0.422,
+          "bankroll": 0,
+          "p50 ms": 265.7,
+          "p95 ms": 274.3,
+          "in time %": 0,
+          "errors": 0
+        },
+        "spam": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 85.417,
+          "F1": 0.873,
+          "Brier": 0.135,
+          "bankroll": 2180413.863,
+          "p50 ms": 110.2,
+          "p95 ms": 125.3,
+          "errors": 0
+        },
+        "babel": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 95.833,
+          "Latin script %": 95.833,
+          "other scripts %": 95.833,
+          "p50 ms": 146.2,
+          "p95 ms": 158.9,
+          "errors": 0
+        },
+        "pager": {
+          "items": 30,
+          "answered": 30,
+          "exact %": 20,
+          "within one level %": 63.333,
+          "MAE": 1.302,
+          "p50 ms": 209.4,
+          "p95 ms": 230.5,
+          "errors": 0
+        },
+        "geo": {
+          "items": 24,
+          "answered": 24,
+          "accuracy %": 62.5,
+          "p50 ms": 174.1,
+          "p95 ms": 184,
+          "errors": 0
+        },
+        "bankroll": {
+          "items": 88,
+          "answered": 88,
+          "chips": 0
+        }
+      }
+    },
+    {
+      "lane": "Laya typed-decisions (421M)",
+      "id": "laya-typed-decisions",
+      "served": "laya-rl-agent",
+      "runner": "GitHub ubuntu-latest, 4 vCPU, no GPU",
+      "games": {
+        "snake": {
+          "items": 60,
+          "answered": 60,
+          "safe moves %": 96.667,
+          "closer to food %": 44.068,
+          "p50 ms": 965.5,
+          "p95 ms": 1001.5,
+          "in time %": 0,
+          "errors": 0
+        },
+        "flappy": {
+          "items": 40,
+          "answered": 40,
+          "accuracy %": 50,
+          "F1": 0.667,
+          "Brier": 0.31,
+          "bankroll": 4.168,
+          "p50 ms": 679.9,
+          "p95 ms": 716.8,
+          "in time %": 0,
+          "errors": 0
+        },
+        "spam": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 83.333,
+          "F1": 0.81,
+          "Brier": 0.089,
+          "bankroll": 275528581536.786,
+          "p50 ms": 296.6,
+          "p95 ms": 339.6,
+          "errors": 0
+        },
+        "babel": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 83.333,
+          "Latin script %": 100,
+          "other scripts %": 66.667,
+          "p50 ms": 438.5,
+          "p95 ms": 591.8,
+          "errors": 0
+        },
+        "pager": {
+          "items": 30,
+          "answered": 30,
+          "exact %": 23.333,
+          "within one level %": 96.667,
+          "MAE": 0.813,
+          "p50 ms": 516.3,
+          "p95 ms": 535,
+          "errors": 0
+        },
+        "geo": {
+          "items": 24,
+          "answered": 24,
+          "accuracy %": 62.5,
+          "p50 ms": 466.7,
+          "p95 ms": 488.7,
+          "errors": 0
+        },
+        "bankroll": {
+          "items": 88,
+          "answered": 88,
+          "chips": 1148400509
+        }
+      }
+    },
+    {
+      "lane": "OneJev 1.5-0.8B",
+      "id": "onejev-0.8b",
+      "served": "onejev",
+      "runner": "GitHub ubuntu-latest, 4 vCPU, no GPU",
+      "games": {
+        "snake": {
+          "items": 60,
+          "answered": 60,
+          "safe moves %": 98.333,
+          "closer to food %": 67.797,
+          "p50 ms": 2761.3,
+          "p95 ms": 2899.5,
+          "in time %": 0,
+          "errors": 0
+        },
+        "flappy": {
+          "items": 40,
+          "answered": 40,
+          "accuracy %": 57.5,
+          "F1": 0.702,
+          "Brier": 0.237,
+          "bankroll": 2817.063,
+          "p50 ms": 2109.2,
+          "p95 ms": 2144.9,
+          "in time %": 0,
+          "errors": 0
+        },
+        "spam": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 77.083,
+          "F1": 0.703,
+          "Brier": 0.133,
+          "bankroll": 829210891.307,
+          "p50 ms": 1268.9,
+          "p95 ms": 1343.9,
+          "errors": 0
+        },
+        "babel": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 100,
+          "Latin script %": 100,
+          "other scripts %": 100,
+          "p50 ms": 1474,
+          "p95 ms": 1544.5,
+          "errors": 0
+        },
+        "pager": {
+          "items": 30,
+          "answered": 30,
+          "exact %": 83.333,
+          "within one level %": 100,
+          "MAE": 0.322,
+          "p50 ms": 1878.2,
+          "p95 ms": 1941.7,
+          "errors": 0
+        },
+        "geo": {
+          "items": 24,
+          "answered": 24,
+          "accuracy %": 79.167,
+          "p50 ms": 2277,
+          "p95 ms": 2326.5,
+          "errors": 0
+        },
+        "bankroll": {
+          "items": 88,
+          "answered": 88,
+          "chips": 2336213497
+        }
+      }
+    },
+    {
+      "lane": "System One Gemma (270M)",
+      "id": "system-one-gemma",
+      "served": "system-one-gemma",
+      "runner": "GitHub ubuntu-latest, 4 vCPU, no GPU",
+      "games": {
+        "snake": {
+          "items": 60,
+          "answered": 60,
+          "safe moves %": 95,
+          "closer to food %": 32.203,
+          "p50 ms": 1293.1,
+          "p95 ms": 1370.3,
+          "in time %": 0,
+          "errors": 0
+        },
+        "flappy": {
+          "items": 40,
+          "answered": 40,
+          "accuracy %": 50,
+          "F1": 0,
+          "Brier": 0.254,
+          "bankroll": 715.553,
+          "p50 ms": 601.9,
+          "p95 ms": 641.1,
+          "in time %": 0,
+          "errors": 0
+        },
+        "spam": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 52.083,
+          "F1": 0.676,
+          "Brier": 0.246,
+          "bankroll": 1657.486,
+          "p50 ms": 216.1,
+          "p95 ms": 253.2,
+          "errors": 0
+        },
+        "babel": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 72.917,
+          "Latin script %": 75,
+          "other scripts %": 70.833,
+          "p50 ms": 427.7,
+          "p95 ms": 486.1,
+          "errors": 0
+        },
+        "pager": {
+          "items": 30,
+          "answered": 30,
+          "exact %": 26.667,
+          "within one level %": 63.333,
+          "MAE": 1.185,
+          "p50 ms": 541.4,
+          "p95 ms": 611.3,
+          "errors": 0
+        },
+        "geo": {
+          "items": 24,
+          "answered": 24,
+          "accuracy %": 29.167,
+          "p50 ms": 2627.9,
+          "p95 ms": 2855,
+          "errors": 0
+        },
+        "bankroll": {
+          "items": 88,
+          "answered": 88,
+          "chips": 1186
+        }
+      }
+    },
+    {
+      "lane": "Von 1.3 (395M)",
+      "id": "von",
+      "served": "von-1.3.0",
+      "runner": "GitHub ubuntu-latest, 4 vCPU, no GPU",
+      "games": {
+        "snake": {
+          "items": 60,
+          "answered": 60,
+          "safe moves %": 93.333,
+          "closer to food %": 37.288,
+          "p50 ms": 223.9,
+          "p95 ms": 227.6,
+          "in time %": 100,
+          "errors": 0
+        },
+        "flappy": {
+          "items": 40,
+          "answered": 40,
+          "accuracy %": 50,
+          "F1": 0,
+          "Brier": 0.351,
+          "bankroll": 0.031,
+          "p50 ms": 206.9,
+          "p95 ms": 215.2,
+          "in time %": 0,
+          "errors": 0
+        },
+        "spam": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 91.667,
+          "F1": 0.913,
+          "Brier": 0.082,
+          "bankroll": 92055506255.566,
+          "p50 ms": 95.9,
+          "p95 ms": 104.4,
+          "errors": 0
+        },
+        "babel": {
+          "items": 48,
+          "answered": 48,
+          "accuracy %": 47.917,
+          "Latin script %": 58.333,
+          "other scripts %": 37.5,
+          "p50 ms": 107.1,
+          "p95 ms": 156.9,
+          "errors": 0
+        },
+        "pager": {
+          "items": 30,
+          "answered": 30,
+          "exact %": 46.667,
+          "within one level %": 93.333,
+          "MAE": 0.724,
+          "p50 ms": 111.2,
+          "p95 ms": 117.2,
+          "errors": 0
+        },
+        "geo": {
+          "items": 24,
+          "answered": 24,
+          "accuracy %": 83.333,
+          "p50 ms": 112,
+          "p95 ms": 114.6,
+          "errors": 0
+        },
+        "bankroll": {
+          "items": 88,
+          "answered": 88,
+          "chips": 2827505
+        }
+      }
+    }
+  ]
+}
