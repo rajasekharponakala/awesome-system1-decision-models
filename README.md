@@ -12,6 +12,7 @@ The name comes from Daniel Kahneman's *Thinking, Fast and Slow*. **System 1** is
 
 ## Contents
 
+- [Recent Developments](#recent-developments)
 - [Core Concepts](#core-concepts)
 - [Models](#models)
   - [Commercial](#commercial)
@@ -29,6 +30,18 @@ The name comes from Daniel Kahneman's *Thinking, Fast and Slow*. **System 1** is
 - [Showcase Ideas: Games and Puzzles](#showcase-ideas-games-and-puzzles)
 - [Guides and Articles](#guides-and-articles)
 - [Related Lists](#related-lists)
+
+---
+
+## Recent Developments
+
+*Last reviewed 14 October 2026. Dates are release dates; performance figures are the vendors' own unless marked otherwise.*
+
+- **The category went multi-vendor.** Within a month of Jev's launch, Cloudflare ([Clef and Clef-flash](#open-weights), 1 Oct, open weights), Inception ([Mercury Decide](#commercial), 30 Sep), OpenAI ([Decisions API on GPT-6 Luna](#commercial), public beta 6 Oct) and Microsoft ([Microsoft-Decision-1](#commercial), 9 Oct) all shipped decision models. Most accept the same `POST /v1/systemone` request format as Jev; OpenAI's Decisions API uses its own format.
+- **Gateways added a decisions surface.** OpenRouter serves decision models through both `/api/v1/systemone` and a Decisions API (`/api/alpha/decisions`), and Vercel AI Gateway lists OpenAI's decision model. See [Provider and Framework Integrations](#provider-and-framework-integrations).
+- **Laya moved to 0.4.x.** The multilingual checkpoint is now the default router fallback, `laya-serve` gained a batch endpoint and API-key auth, large choice sets can be answered by elimination (`laya_tournament`), and there are new LlamaIndex and CrewAI extras plus JS and Go ports.
+- **More independent measurements.** [jev-measured](https://github.com/WallerChen/jev-measured) compares 13 hosted decision models on the same items and finds wide differences in overconfidence. See [Evaluation and Calibration](#evaluation-and-calibration).
+- **New open models since the last update:** [Largha](#open-weights) (bilingual English/Chinese, 144M) and [OneJev](#open-weights) (multimodal, 0.8B–27B), and [Hesperan](#commercial) on the hosted side.
 
 ---
 
@@ -73,19 +86,23 @@ Jev-compatible open runtimes expose the same `POST /v1/systemone` wire format, s
 
 - [Jev (TypeSafe AI)](https://typesafe.ai/): The model that defined the category, released 15 September 2026. It is served at `POST https://api.typesafe.ai/v1/systemone` (model route `jev-latest`). TypeSafe reports it as 40–200× faster than frontier LLMs on comparable tasks. [Launch post](https://typesafe.ai/blog/introducing-system-one-models-and-jev) · [Docs](https://docs.typesafe.ai/) · [Models & pricing](https://docs.typesafe.ai/models) · [Known limitations (Jev 1.13)](https://docs.typesafe.ai/model-jaggedness/jev-1.13)
 - [Hesperan](https://hesperan.com/): A hosted, closed-weights decision model (Hesperan 1), served at `POST https://api.hesperan.com/v1/systemone` in the TypeSafe request format (choice, score, noul; string criteria, answers without `confidence` or `legend`). Decision profiles calibrate one decision on 100–2,000 of your own labelled cases, set the threshold for a target precision and return `auto` or `review` per call. Billed by input tokens: 1M free a month, then $0.25 per 1M pay as you go, or Pro ($9/month, 40M tokens). [Docs](https://hesperan.com/docs) · [OpenAPI](https://hesperan.com/openapi.json) · [Benchmarks (authors' own measurements)](https://hesperan.com/benchmarks).
+- [OpenAI Decisions API (GPT-6 Luna Decisions)](https://vercel.com/changelog/openai-decisions-api-now-available-on-ai-gateway): OpenAI's decision endpoint, in public beta since 6 October 2026 after a DevDay preview. It answers yes/no, multiple-choice and scoring questions over shared text **and image** input and returns probabilities, using its own request format rather than `/v1/systemone`. OpenAI quotes about 150 ms per decision and $0.10 per 1M input tokens with no output charge. Also on [OpenRouter](https://openrouter.ai/openai/gpt-6-luna-decisions) (`openai/gpt-6-luna-decisions`) and Vercel AI Gateway. Not to be confused with OpenRouter's own, older Decisions API.
+- [Microsoft-Decision-1](https://openrouter.ai/microsoft/microsoft-decision-1): A hosted, closed-weights decision model from Microsoft, released 9 October 2026 and post-trained from Qwen3.5-9B, for routing, classification, verification and safety checks. It is available in Microsoft Foundry (reported at $0.042 per 1M input tokens, output free) and on OpenRouter's Decisions API. Microsoft reports 83.5% across 36 benchmarks and a 2.8× latency advantage over Jev; these are unverified.
+- [Mercury Decide (Inception)](https://openrouter.ai/inception/mercury-decide): Inception's decision model, released 30 September 2026 and served on OpenRouter as a System One endpoint with the same `/v1/systemone` schema as Jev. It is listed at about $0.02 per 1M input tokens, with a [free variant](https://openrouter.ai/inception/mercury-decide:free).
 
 ### Open Weights
 
-- [Laya (Convai Innovations)](https://github.com/NandhaKishorM/laya): An Apache-2.0 System 1 model released 18 September 2026 and trained with RL against strictly proper scoring rules (RLCD), so its probabilities are calibrated. It supports `choice`, `score`, and `noul`, and runs in about 33 ms per question on a T4 GPU (about 7 ms batched). Install with `pip install laya` (v0.3.20 at the time of writing). The package includes `laya-serve`, a Jev-compatible `POST /v1/systemone` server (`pip install "laya[serve]"`), plus optional ONNX, MCP, and LangChain extras. [Website](https://laya.convaiinnovations.com/)
-  - Checkpoints: [`laya`](https://huggingface.co/convaiinnovations/laya) (English, ModernBERT-large, 421M, 512 tokens) · [`laya-multilingual`](https://huggingface.co/convaiinnovations/laya-multilingual) (322M, 100+ languages, up to 8,192 tokens) · [`laya-typed-decisions`](https://huggingface.co/convaiinnovations/laya-typed-decisions) (421M, fine-tuned on the typed-decisions benchmark's training split) · [Demo](https://huggingface.co/spaces/convaiinnovations/laya-demo)
+- [Laya (Convai Innovations)](https://github.com/NandhaKishorM/laya): An Apache-2.0 System 1 model released 18 September 2026 and trained with RL against strictly proper scoring rules (RLCD), so its probabilities are calibrated. It supports `choice`, `score`, and `noul`, and runs in about 33 ms per question on a T4 GPU (about 7 ms batched). Install with `pip install laya` (v0.4.7 at the time of writing). The package includes `laya-serve`, a Jev-compatible `POST /v1/systemone` server with a batch endpoint (`pip install "laya[serve]"`), plus optional ONNX, MCP, LangChain, LlamaIndex, and CrewAI extras, `min_confidence` abstention, and a `laya-evals` harness. JavaScript (`laya-ts`, `laya-client`) and Go ports live in the same repo. [Website](https://laya.convaiinnovations.com/)
+  - Checkpoints: [`laya`](https://huggingface.co/convaiinnovations/laya) (English, ModernBERT-large, 421M, 512 tokens) · [`laya-multilingual`](https://huggingface.co/convaiinnovations/laya-multilingual) (322M, 100+ languages, 1,024 tokens by default and up to 8,192 with `max_len=8192`; the router's default fallback since 0.4.0) · [`laya-typed-decisions`](https://huggingface.co/convaiinnovations/laya-typed-decisions) (421M, fine-tuned on the typed-decisions benchmark's training split) · [Demo](https://huggingface.co/spaces/convaiinnovations/laya-demo)
   - The authors report 0.766 accuracy against Jev's 0.727 on their typed-decisions benchmark (fine-tuned checkpoint) and better calibration (ECE 0.081 vs 0.144). They also say Jev stays stronger on choices with more than 20 options. The base checkpoints score far lower zero-shot; see [independent comparisons](#head-to-head-jev-vs-laya).
 - [Kev (Jared Palmer)](https://github.com/jaredpalmer/kev): An Apache-2.0 family of decision models from 0.8B to 27B parameters, built on Qwen3.5 bases and released 20 September 2026. It is a drop-in for the Jev API (`kev.serve`, or deploy to Modal). On the repo's own new-source benchmark, Kev-27B scores 0.848 against Jev's 0.857. The larger models need a data-center GPU; the 0.8B model runs on Apple silicon. [Kev-9B on Hugging Face](https://huggingface.co/jaredpalmer/kev-9b)
 - [Von](https://github.com/wfzyx/von): An Apache-2.0 model built on ModernBERT-large (395M). It claims under 15 ms latency and is a drop-in for the `/v1/systemone` spec. Install with `pip install von-sdk`.
 - [System One Gemma](https://github.com/akash-kamat/system-one-gemma): Gemma 3 270M with a LoRA scoring head, running in about 50 ms on CPU. The code is Apache-2.0, but the pretrained weights are non-commercial because of CC-BY-NC training data.
-- [OpenJev](https://github.com/razorback16/openjev): A Jev-compatible decision server on DiffusionGemma 26B-A4B (Apache-2.0). It runs through vLLM (24 GB+ NVIDIA GPU) or MLX, and adds image support.
+- [OpenJev](https://github.com/razorback16/openjev): A Jev-compatible decision server (Apache-2.0) built around DiffusionGemma 26B-A4B, which runs through vLLM (24 GB+ NVIDIA GPU) or MLX and accepts images. It now also serves Laya, Verdict, CLM, JevK5, and Cloudflare's Clef models behind the same API, and has a hosted endpoint at Codiv.
 - [OneJev (OmniJev)](https://github.com/OmniJev/OneJev): An Apache-2.0 multimodal System 1 model family released 27 September 2026, full fine-tunes of Qwen3.5 (0.8B, 4B, 9B) and Qwen3.8-27B. Typed `choice`, `score`, and `noul` questions about a screenshot, photo, video or text get a calibrated probability for every option in one forward pass, through the `/v1/systemone` request plus a `media` list. On one H200, a question about a 1280x720 screenshot takes 31 ms on the 0.8B and 189 ms on the 27B, and ten questions cost little more than one. The authors report that on 354 TypeSafe questions with published Jev answers, OneJev-27B scores 89.3 against Jev 1.13's 89.0 (Jev reads text only, so that comparison covers text).
   - Checkpoints: [`0.8B`](https://huggingface.co/OmniJev/OneJev-0.8B) · [`4B`](https://huggingface.co/OmniJev/OneJev-4B) · [`9B`](https://huggingface.co/OmniJev/OneJev-9B) · [`27B`](https://huggingface.co/OmniJev/OneJev-27B) · [`27B-FP8`](https://huggingface.co/OmniJev/OneJev-27B-FP8)
 - [Largha (Phocinae)](https://github.com/Phocinae/Phocinae-Largha-150M-v1): An Apache-2.0 bilingual (English/Chinese) typed decision model on mmBERT-small (144.3M parameters) that returns calibrated Choice, Score, and Noul probabilities in one forward pass. Training includes option-order invariance, and a confidence gate keeps low-risk decisions local. The authors report typed-decisions 0.906 (en, specialist: fitted on this dataset's train split) / 0.848 (zh, machine-translated cases), about 1.64 s per case on CPU (single-thread p50), and 21.0 ms p50 on an RTX 5090 (fp16). Weights are on [Hugging Face](https://huggingface.co/Phocinae/Phocinae-Largha-150M-v1).
+- [Clef and Clef-flash (Cloudflare)](https://developers.cloudflare.com/changelog/post/2026-10-01-clef-workers-ai/): Apache-2.0 open-weight decision models released 1 October 2026: Clef on a frozen Qwen3.8-27B and Clef-flash on Qwen3.5-9B, each with a trained routing head and LoRA adapters. Both are Jev-API compatible and hosted on Workers AI as `@cf/cloudflare/clef` and `@cf/cloudflare/clef-flash`, with weights on Hugging Face. Cloudflare reports median latencies of 209 ms (Clef) and 38.8 ms (Clef-flash) and says the models lead 7 of 10 decision benchmarks; reported local VRAM needs are about 85 GB and 41 GB. The launch also introduced an RL fine-tuning service, run by Cloudflare engineers at first. Training data is not public.
 
 ### Open Reproductions and Research
 
@@ -136,6 +153,7 @@ Jev-compatible open runtimes expose the same `POST /v1/systemone` wire format, s
 
 **Gateways and hosting**
 - [Cloudflare Workers AI](https://developers.cloudflare.com/ai/models/typesafe/jev/) · [OpenRouter](https://openrouter.ai/typesafe/jev-1.13) · [Vercel AI Gateway](https://vercel.com/changelog/typesafe-ai-jev-now-available-on-ai-gateway) · [Netlify AI Gateway](https://www.netlify.com/changelog/typesafe-jev-ai-gateway/)
+- [OpenRouter Decisions API](https://openrouter.ai/docs/guides/community/jev): Serves Jev, Mercury Decide, Microsoft-Decision-1, GPT-6 Luna Decisions and other decision models through `/api/v1/systemone` and `/api/alpha/decisions`, billed to one OpenRouter key. · [Cloudflare Workers AI: Clef](https://developers.cloudflare.com/changelog/post/2026-10-01-clef-workers-ai/) · [Vercel AI Gateway: OpenAI Decisions API](https://vercel.com/changelog/openai-decisions-api-now-available-on-ai-gateway)
 
 **Frameworks**
 - [Pydantic AI](https://github.com/pydantic/pydantic-ai): A TypeSafe model provider with routing.
@@ -194,6 +212,7 @@ Jev-compatible open runtimes expose the same `POST /v1/systemone` wire format, s
 - [laya-jev-lab](https://github.com/yibie/laya-jev-lab): Independent Jev vs Laya measurements on 40 Chinese support tickets, plus a local-first cascade (see below).
 - [Luni/laya-jev-benchmark](https://huggingface.co/datasets/Luni/laya-jev-benchmark): A shared dataset for comparing Laya and Jev on the same inputs.
 - [Using TypeSafe's Jev for evals (Langfuse)](https://langfuse.com/blog/2026-09-18-using-typesafes-jev-for-evals): Using Jev as an evaluator inside an LLM observability stack.
+- [jev-measured](https://github.com/WallerChen/jev-measured): MIT-licensed, reproducible measurements of hosted Jev's cost (about $0.000015–0.000030 per decision), latency, and accuracy, plus a 633-item comparison of 13 decision models on OpenRouter (runs from September to October 2026). It finds Jev wrong on 11.5% of answers given at ≥90% confidence, against 2.3% for Clef, and Clef-flash ahead of Jev on 59–77-option choices. Its labelled ticket set is small (27 items), so it is not enough to rank models. The author is unaffiliated with TypeSafe.
 - [Snake race benchmark (this repo)](showcase/snake-race/RESULTS.md): Jev vs Laya on identical Snake positions, run in GitHub Actions with published logs.
 
 ### Head-to-head: Jev vs Laya
@@ -244,13 +263,18 @@ A System 1 model is the better choice when **the answer space is known ahead of 
 | You need | Pick |
 |---|---|
 | A managed API, the widest ecosystem, and gateway availability | **Jev** |
+| A managed API from a hyperscaler you already use | **Clef** on Workers AI, **Microsoft-Decision-1** on Foundry, or OpenAI's **Decisions API** |
+| Hosted decisions over images | **OpenAI Decisions API** (GPT-6 Luna Decisions) |
+| The lowest hosted price per token | **Mercury Decide** (free tier available) |
+| Open weights from a large vendor, with a hosted option too | **Clef** / **Clef-flash** (Apache-2.0) |
 | Open weights (Apache-2.0), self-hosting, and multilingual support | **Laya** via `laya-serve` (Python) or **@receptron/laya** (Node, no Python) |
 | The fastest local decisions on a Mac | **Laya** via **laya-mlx** or **laya-coreml** |
 | Open weights with accuracy close to Jev, and a data-center GPU | **Kev** (up to 27B) |
 | Jev accuracy at lower cost and latency | A **cascade**: Laya first, Jev for low-confidence cases |
 | The lowest latency on a GPU with local, drop-in `/v1/systemone` | **Von** |
 | CPU-only or edge, and you don't need commercial use | **System One Gemma** |
-| Large-model accuracy or image input, self-hosted | **OpenJev** (DiffusionGemma, 24 GB+ GPU) |
+| Large-model accuracy or image input, self-hosted | **OpenJev** (DiffusionGemma, 24 GB+ GPU) or **OneJev** (images and video, 0.8B–27B) |
+| English and Chinese on small hardware | **Largha** (144M) |
 
 > Before choosing, benchmark on **your own labeled data**. Published numbers come from the model authors, and the Laya authors note that base checkpoints are near random on zero-shot typed decisions until fine-tuned.
 
