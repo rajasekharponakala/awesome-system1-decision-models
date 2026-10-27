@@ -130,6 +130,7 @@ Jev-compatible open runtimes expose the same `POST /v1/systemone` wire format, s
 - [@receptron/laya](https://github.com/receptron/laya): Runs Laya from Node.js/TypeScript through ONNX Runtime, with no PyTorch. It needs about 2 GB RAM and takes about 140 ms on CPU. Install with `npm install @receptron/laya`.
 - [openjev-sglang](https://github.com/ekzhang/openjev-sglang): A Jev-style endpoint on SGLang.
 - [jevmlx](https://github.com/bnsd55/jevmlx): Parallel decisions on Apple MLX.
+- [Flide](https://github.com/OmniJev/Flide): An open-source inference engine for decision models; its authors report it up to 9.4× faster than existing LLM inference frameworks while maintaining high precision. Supports 19 model families through `/v1/systemone`. Install with `pip install flide`. [Website](https://flide.org).
 
 ## Official SDKs
 
